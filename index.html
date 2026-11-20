@@ -154,7 +154,7 @@ td:first-child{text-align:left;font-weight:700}
       <p><b>スリザーリンク</b>：点と点を線でつないで、1つの輪を作ります。数字は、そのマスの4辺のうち線になる辺の数。輪は枝分かれも交差もしません。</p>
       <ul>
         <li>辺をタップ＝線（もう一度で×、もう一度で消す）。指2本で拡大・指でずらしても線は引かれません</li>
-        <li>盤目は最初から薄く出ています。線を引いて、もう引けなくなった辺（線が2本集まった点から出る辺・数字の数だけ線を引き終えたマスの辺）の盤目は自動で消えます</li>
+        <li>盤目は最初から薄く出ています。線を引いて、もう引けなくなった辺（線が2本集まった点から出る辺・数字の数だけ線を引き終えたマスの辺・どこにもつながらない行き止まりの辺）の盤目は自動で消えます</li>
         <li>「×」モードでタップ＝線が来ない印（線モードでも、線をもう一度タップすると×）</li>
         <li><b>セーブ</b>＝今の盤面を覚える。<b>戻る</b>＝最後のセーブまで一気に戻る（もう一度押すと、その前のセーブへ）。セーブより後に引いた線は水色で出ます（仮定を試すときに便利）</li>
         <li>数字の線が多すぎる・×が多すぎるマスは黄色になります</li>
@@ -403,9 +403,21 @@ function slDraw() {
       for (const c of G.edgeCells[e]) { const k = g.clues[c]; if (k >= 0 && L[c] >= k) return true; }
       return false;
     };
+    // 行き止まりの辺も消す：線の無い点から、まだ引ける辺が1本しか出ていなければ、その辺は輪にならない（消すとまた別の行き止まりができるので繰り返す）
+    const avail = new Uint8Array(G.E);
+    for (let e = 0; e < G.E; e++) avail[e] = (g.marks[e] === 0 && !blocked(e)) ? 1 : 0;
+    for (let changed = true, guard = 0; changed && guard < 200; guard++) {
+      changed = false;
+      for (let v = 0; v < G.V; v++) {
+        if (vdeg[v] !== 0) continue;
+        let n = 0, last = -1;
+        for (const e of G.vertEdges[v]) if (avail[e]) { n++; last = e; }
+        if (n === 1) { avail[last] = 0; changed = true; }
+      }
+    }
     ctx.strokeStyle = '#cdc5b4'; ctx.lineWidth = Math.max(1.5, cs * 0.05); ctx.lineCap = 'butt';
     ctx.beginPath();
-    for (let e = 0; e < G.E; e++) { if (g.marks[e] !== 0 || blocked(e)) continue; const [x1, y1, x2, y2] = ex(e); ctx.moveTo(X(x1), Y(y1)); ctx.lineTo(X(x2), Y(y2)); }
+    for (let e = 0; e < G.E; e++) { if (!avail[e]) continue; const [x1, y1, x2, y2] = ex(e); ctx.moveTo(X(x1), Y(y1)); ctx.lineTo(X(x2), Y(y2)); }
     ctx.stroke();
     // ×の印
     ctx.strokeStyle = '#6b6b6b'; ctx.lineWidth = Math.max(1.5, cs * 0.05); ctx.lineCap = 'round';

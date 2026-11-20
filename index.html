@@ -161,7 +161,7 @@ td:first-child{text-align:left;font-weight:700}
       </ul>
       <p><b>マインスイーパー</b>：地雷のないマスを全部開けばクリア。数字は周りの8マスにある地雷の数。</p>
       <ul>
-        <li>最初の1手は必ず安全。<b>どの盤面も当てずっぽうなしで最後まで解けます</b></li>
+        <li>最初の1手は必ず安全（「旗を立てる」を選んでいても、最初のタップは掘ります）。<b>どの盤面も当てずっぽうなしで最後まで解けます</b></li>
         <li>「タップで」を<b>掘る</b>にするとタップ＝掘る・長押し＝旗、<b>旗を立てる</b>にするとタップ＝旗・長押し＝掘る（下の左のボタンでも切り替えられます）</li>
         <li>数字をタップ＝周りの旗の数が合っていれば残りをまとめて開く</li>
       </ul>
@@ -736,7 +736,8 @@ function mnOpen(c, ch) {
 }
 async function mnTap(c, alt) {
   const g = S.mn.game; if (!g || g.done || g.lost >= 0 || mnBusy || c < 0) return;
-  const flagMode = (S.mn.mode === 'flag') !== !!alt;
+  // 最初の1手は、旗を立てる設定でも長押しでも必ず掘る
+  const flagMode = g.mines ? ((S.mn.mode === 'flag') !== !!alt) : false;
   const s = g.cells[c];
   if (flagMode && s !== 1) {
     const ch = [[c, s]]; g.cells[c] = s === 2 ? 0 : 2;

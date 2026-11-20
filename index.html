@@ -23,15 +23,17 @@ body{font-family:var(--jp);font-size:15px;line-height:1.45;-webkit-font-smoothin
   user-select:none;-webkit-user-select:none;min-height:100vh;overflow-x:hidden;
   padding:0 16px calc(96px + env(safe-area-inset-bottom))}
 .wrap{max-width:560px;margin:0 auto}
-header{padding:14px 0 10px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+header{padding:14px 0 10px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px}
 .brand{font-family:'Archivo Black',var(--jp);font-size:26px;line-height:.86;letter-spacing:-.03em;text-transform:uppercase}
 .brand span{display:inline-block;background:var(--blue);color:#fff;padding:2px 6px 1px;margin-top:3px;transform:rotate(-2deg)}
 .geo{position:fixed;z-index:-1;pointer-events:none}
 .geo.c{width:180px;height:180px;border-radius:50%;background:var(--yellow);opacity:.18;right:-60px;top:70px}
 .geo.s{width:120px;height:120px;background:var(--blue);opacity:.07;left:-40px;bottom:120px;transform:rotate(12deg)}
-nav.tabs{display:flex;border:3px solid var(--black);box-shadow:3px 3px 0 var(--black);background:var(--paper)}
+nav.tabs{display:flex;width:100%;border:3px solid var(--black);box-shadow:3px 3px 0 var(--black);background:var(--paper)}
 nav.tabs button{font:inherit;font-family:'Archivo Black',var(--jp);font-size:12px;letter-spacing:.06em;
-  border:0;border-left:3px solid var(--black);background:transparent;padding:8px 10px;color:var(--black)}
+  border:0;border-left:3px solid var(--black);background:transparent;padding:9px 2px;color:var(--black);flex:1;white-space:nowrap}
+nav.tabs button.jp{font-family:var(--jp);font-weight:700;font-size:13px;letter-spacing:0}
+nav.tabs button.rec{flex:.8}
 nav.tabs button:first-child{border-left:0}
 nav.tabs button.on{background:var(--yellow)}
 .panel{display:none}
@@ -80,7 +82,7 @@ nav.tabs button.on{background:var(--yellow)}
 .btn:disabled{opacity:.4}
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:9;
   background:var(--black);color:#fff;padding:9px 14px;font-weight:700;font-size:14px;width:max-content;max-width:92vw;text-align:center;
-  border:3px solid var(--black);box-shadow:3px 3px 0 var(--yellow);display:none}
+  border:3px solid var(--black);box-shadow:3px 3px 0 var(--yellow);display:none;pointer-events:none}
 .toast.on{display:block}
 .modal{position:fixed;inset:0;z-index:20;background:rgba(26,26,26,.45);display:none;align-items:center;justify-content:center;padding:16px}
 .modal.on{display:flex}
@@ -103,6 +105,16 @@ td:first-child{text-align:left;font-weight:700}
 .mini{display:flex;gap:8px;margin-top:10px}
 .mini .btn{min-height:44px;font-size:13px}
 .note{font-size:12px;color:var(--sub);margin-top:8px}
+.qbtn{font:inherit;font-weight:700;font-size:12px;border:2px solid var(--black);background:var(--yellow);padding:3px 8px;color:var(--black)}
+.status .qbtn{margin-left:8px}
+.helpcard{max-height:82vh;overflow:auto}
+.helpcard h4{font-size:18px;margin:2px 0 8px}
+.helpcard ul{padding-left:1.2em}
+.helpcard li{margin:5px 0;font-size:14px}
+.helpcard .ex{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+.helpcard .ex figure{flex:1;min-width:130px;border:2px solid var(--black);background:var(--paper2);padding:6px;text-align:center}
+.helpcard figcaption{font-size:12px;font-weight:700;margin-top:4px}
+#y-canvas,#r-canvas{touch-action:manipulation}
 </style>
 </head>
 <body>
@@ -111,7 +123,7 @@ td:first-child{text-align:left;font-weight:700}
   <header>
     <div class="brand">Endless<br><span>Puzzle</span></div>
     <nav class="tabs">
-      <button data-tab="sl">SLITHER</button><button data-tab="mn">MINES</button><button data-tab="st">記録</button>
+      <button class="jp" data-tab="sl">スリザー</button><button class="jp" data-tab="mn">マイン</button><button class="jp" data-tab="my">ましゅ</button><button class="jp" data-tab="nr">ぬりかべ</button><button class="jp rec" data-tab="st">記録</button>
     </nav>
   </header>
 
@@ -120,7 +132,7 @@ td:first-child{text-align:left;font-weight:700}
       <div class="seg" id="sl-level"><button data-v="1">かんたん</button><button data-v="2">ふつう</button><button data-v="3">むずかしい</button></div>
       <div class="seg" id="sl-size"><button data-v="6">6×6</button><button data-v="8">8×8</button><button data-v="10">10×10</button></div>
     </div>
-    <div class="status"><span>Time</span><b id="sl-time">0:00</b><span class="tag" id="sl-tag"></span></div>
+    <div class="status"><span>Time</span><b id="sl-time">0:00</b><span class="tag" id="sl-tag"></span><button class="qbtn" data-help="sl">？</button></div>
     <div class="saverow"><button class="btn" id="sl-save"><small>SAVE</small>セーブ</button><button class="btn" id="sl-load"><small>BACK</small>セーブまで戻る</button><span id="sl-saveinfo">セーブなし</span></div>
     <div class="board" id="sl-board"><canvas id="s-canvas"></canvas>
       <div class="busy" id="sl-busy"><div class="spin"></div><div>問題を作っています…<br><small>答えが1つに決まるか確かめています</small></div></div>
@@ -132,9 +144,34 @@ td:first-child{text-align:left;font-weight:700}
       <div class="seg" id="mn-level"><button data-v="1">初級 9×9</button><button data-v="2">中級 16×16</button><button data-v="3">上級 16×30</button></div>
       <div class="seg tapsel" id="mn-tap"><span>タップで</span><button data-v="open">⛏ 掘る</button><button data-v="flag"><svg class="fi" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 3v14M4 17h8" stroke="#1a1a1a" stroke-width="2.2"/><path d="M8 3l9 4-9 4z" fill="#1d4ed8" stroke="#1a1a1a" stroke-width="1"/></svg> 旗を立てる</button></div>
     </div>
-    <div class="status"><span>Time</span><b id="mn-time">0:00</b><span>Mines</span><b id="mn-left">0</b><span class="tag" id="mn-tag"></span></div>
+    <div class="status"><span>Time</span><b id="mn-time">0:00</b><span>Mines</span><b id="mn-left">0</b><span class="tag" id="mn-tag"></span><button class="qbtn" data-help="mn">？</button></div>
     <div class="board" id="mn-board"><canvas id="m-canvas"></canvas>
       <div class="busy" id="mn-busy"><div class="spin"></div><div>盤面を作っています…<br><small>当てずっぽうなしで解けるか確かめています</small></div></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-my">
+    <div class="opts">
+      <div class="seg" id="my-level"><button data-v="1">かんたん</button><button data-v="2">ふつう</button><button data-v="3">むずかしい</button></div>
+      <div class="seg" id="my-size"><button data-v="6">6×6</button><button data-v="8">8×8</button><button data-v="10">10×10</button></div>
+    </div>
+    <div class="status"><span>Time</span><b id="my-time">0:00</b><span class="tag" id="my-tag"></span><button class="qbtn" data-help="my">？</button></div>
+    <div class="saverow"><button class="btn" id="my-save"><small>SAVE</small>セーブ</button><button class="btn" id="my-load"><small>BACK</small>セーブまで戻る</button><span id="my-saveinfo">セーブなし</span></div>
+    <div class="board" id="my-board"><canvas id="y-canvas"></canvas>
+      <div class="busy" id="my-busy"><div class="spin"></div><div>問題を作っています…<br><small>答えが1つに決まるか確かめています（10×10は少し時間がかかります）</small></div></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-nr">
+    <div class="opts">
+      <div class="seg" id="nr-level"><button data-v="1">かんたん</button><button data-v="2">ふつう</button><button data-v="3">むずかしい</button></div>
+      <div class="seg" id="nr-size"><button data-v="6">6×6</button><button data-v="8">8×8</button><button data-v="10">10×10</button></div>
+      <div class="seg tapsel" id="nr-tap"><span>タップで</span><button data-v="black">■ 黒く塗る</button><button data-v="dot">・ 白の印</button></div>
+    </div>
+    <div class="status"><span>Time</span><b id="nr-time">0:00</b><span class="tag" id="nr-tag"></span><button class="qbtn" data-help="nr">？</button></div>
+    <div class="saverow"><button class="btn" id="nr-save"><small>SAVE</small>セーブ</button><button class="btn" id="nr-load"><small>BACK</small>セーブまで戻る</button><span id="nr-saveinfo">セーブなし</span></div>
+    <div class="board" id="nr-board"><canvas id="r-canvas"></canvas>
+      <div class="busy" id="nr-busy"><div class="spin"></div><div>問題を作っています…<br><small>答えが1つに決まるか確かめています（10×10は少し時間がかかります）</small></div></div>
     </div>
   </section>
 
@@ -143,6 +180,10 @@ td:first-child{text-align:left;font-weight:700}
     <table id="st-sl"></table>
     <h2>Minesweeper</h2>
     <table id="st-mn"></table>
+    <h2>Masyu</h2>
+    <table id="st-my"></table>
+    <h2>Nurikabe</h2>
+    <table id="st-nr"></table>
     <p class="note">ベスト＝ヒントも「一手戻す（地雷を踏んだあと）」も使わずに解いた中で一番速い時間。平均はクリアした全部。</p>
     <div class="mini">
       <button class="btn" id="bk-out">記録を書き出す</button>
@@ -150,6 +191,7 @@ td:first-child{text-align:left;font-weight:700}
       <input type="file" id="bk-file" accept="application/json,.json" hidden>
     </div>
     <h2>遊び方</h2>
+    <div class="mini"><button class="btn" data-help="sl">スリザー</button><button class="btn" data-help="mn">マイン</button><button class="btn" data-help="my">ましゅ</button><button class="btn" data-help="nr">ぬりかべ</button></div>
     <div class="help">
       <p><b>スリザーリンク</b>：点と点を線でつないで、1つの輪を作ります。数字は、そのマスの4辺のうち線になる辺の数。輪は枝分かれも交差もしません。</p>
       <ul>
@@ -184,6 +226,19 @@ td:first-child{text-align:left;font-weight:700}
   <button class="btn blue" id="mn-new"><small>NEW</small>新しい盤面</button>
 </div></div>
 
+<div class="tools" id="tools-my"><div class="row">
+  <button class="btn mode" id="my-mode"><small>MODE</small>線</button>
+  <button class="btn" id="my-undo"><small>UNDO</small>一手戻す</button>
+  <button class="btn" id="my-hint"><small>HINT</small>ヒント</button>
+  <button class="btn blue" id="my-new"><small>NEW</small>新しい問題</button>
+</div></div>
+<div class="tools" id="tools-nr"><div class="row">
+  <button class="btn mode" id="nr-mode"><small>TAP</small>■ 黒</button>
+  <button class="btn" id="nr-undo"><small>UNDO</small>一手戻す</button>
+  <button class="btn" id="nr-hint"><small>HINT</small>ヒント</button>
+  <button class="btn blue" id="nr-new"><small>NEW</small>新しい問題</button>
+</div></div>
+
 <div class="toast" id="toast"></div>
 <div class="modal" id="modal"><div class="card" id="modal-card"></div></div>
 
@@ -196,10 +251,12 @@ const LV = { 1: 'かんたん', 2: 'ふつう', 3: 'むずかしい' };
 const MLV = { 1: { W: 9, H: 9, M: 10, name: '初級' }, 2: { W: 16, H: 16, M: 40, name: '中級' }, 3: { W: 16, H: 30, M: 99, name: '上級' } };
 
 /* ---------- 保存 ---------- */
-function defaults() { return { v: 1, tab: 'sl', sl: { level: 2, size: 8, game: null, mode: 1 }, mn: { level: 1, game: null, mode: 'open' }, queue: {}, stats: {} }; }
+function defaults() { return { v: 1, tab: 'sl', sl: { level: 2, size: 8, game: null, mode: 1 }, mn: { level: 1, game: null, mode: 'open' }, my: { level: 2, size: 8, game: null, mode: 1 }, nr: { level: 2, size: 8, game: null, mode: 'black' }, queue: {}, stats: {}, seen: {} }; }
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || defaults(); } catch (e) { S = defaults(); }
 S = Object.assign(defaults(), S);
+// 前から遊んでいる遊びは、説明を自動では出さない
+if (S.sl.game) S.seen.sl = 1; if (S.mn.game) S.seen.mn = 1;
 let saveTimer = 0;
 function save(now) {
   clearTimeout(saveTimer);
@@ -236,6 +293,8 @@ function confirmBox(msg, yes, no) {
 let worker = null; const pending = new Map(); let reqId = 0;
 function runLocal(m) {
   if (m.type === 'slither') return { puzzle: EPGen.genSlither(m.W, m.H, m.level) };
+  if (m.type === 'masyu') return { puzzle: EPGen.genMasyu(m.W, m.H, m.level) };
+  if (m.type === 'nuri') return { puzzle: EPGen.genNurikabe(m.W, m.H, m.level) };
   return { puzzle: EPGen.genMines(m.W, m.H, m.M, m.first) };
 }
 function getWorker() {
@@ -259,12 +318,14 @@ function request(msg) {
 function setTab(t) {
   S.tab = t; save();
   document.querySelectorAll('nav.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
-  ['sl', 'mn', 'st'].forEach((k) => $('p-' + k).classList.toggle('on', k === t));
-  $('tools-sl').style.display = t === 'sl' ? '' : 'none';
-  $('tools-mn').style.display = t === 'mn' ? '' : 'none';
+  ['sl', 'mn', 'my', 'nr', 'st'].forEach((k) => $('p-' + k).classList.toggle('on', k === t));
+  ['sl', 'mn', 'my', 'nr'].forEach((k) => { $('tools-' + k).style.display = t === k ? '' : 'none'; });
   if (t === 'sl') { slEnsure(); slLayout(); }
   if (t === 'mn') { mnEnsure(); mnLayout(); }
+  if (t === 'my') { myEnsure(); myLayout(); }
+  if (t === 'nr') { nrEnsure(); nrLayout(); }
   if (t === 'st') renderStats();
+  if (t !== 'st' && !S.seen[t]) { S.seen[t] = 1; save(); showHelp(t); }
 }
 document.querySelectorAll('nav.tabs button').forEach((b) => b.onclick = () => setTab(b.dataset.tab));
 
@@ -275,6 +336,7 @@ setInterval(() => {
   if (document.visibilityState !== 'visible' || $('modal').classList.contains('on')) return;
   if (S.tab === 'sl') { const g = S.sl.game; if (g && g.started && !g.done) { g.t += dt; $('sl-time').textContent = fmt(g.t); } }
   if (S.tab === 'mn') { const g = S.mn.game; if (g && g.started && !g.done && g.lost < 0) { g.t += dt; $('mn-time').textContent = fmt(g.t); } }
+  if (S.tab === 'my' || S.tab === 'nr') { const g = S[S.tab].game; if (g && g.started && !g.done) { g.t += dt; $(S.tab + '-time').textContent = fmt(g.t); } }
 }, 250);
 setInterval(() => save(), 5000);
 
@@ -605,6 +667,575 @@ $('sl-hint').onclick = () => {
 $('sl-new').onclick = slNew;
 
 /* =====================================================
+   ましゅ（スリザーリンクの画面を写したもの。点＝マスの中心。g.W・g.H は点の並び−1）
+   ===================================================== */
+const yv = { cv: $('y-canvas'), cs: 30, pad: 14, dpr: 1, hint: null, wrong: null };
+yv.ctx = yv.cv.getContext('2d');
+const myKey = (size, level) => 'Y' + size + '-' + level;
+let myWaiting = null;
+
+function myFill() {
+  const k = myKey(S.my.size, S.my.level);
+  const q = S.queue[k] || (S.queue[k] = []);
+  if (q.length >= 2 || filling[k]) return;
+  filling[k] = true;
+  const size = S.my.size, level = S.my.level;
+  request({ type: 'masyu', W: size, H: size, level }).then((r) => {
+    filling[k] = false;
+    if (r.puzzle) { (S.queue[k] || (S.queue[k] = [])).push(r.puzzle); save(); }
+    if (myWaiting === k && r.puzzle) { myWaiting = null; myStartFromQueue(); }
+    myFill();
+  });
+}
+function myStartFromQueue() {
+  const k = myKey(S.my.size, S.my.level), q = S.queue[k] || [];
+  if (!q.length) { myWaiting = k; $('my-busy').classList.add('on'); myFill(); return; }
+  const p = q.shift();
+  const G = EPGen.geo(p.W - 1, p.H - 1);
+  S.my.game = { W: p.W - 1, H: p.H - 1, level: S.my.level, grade: p.level, circ: p.circ, clues: new Array(G.C).fill(-1), sol: p.sol, marks: new Array(G.E).fill(0), undo: [], saves: [], t: 0, started: false, assist: false, done: false };
+  yv.hint = null; yv.wrong = null;
+  $('my-busy').classList.remove('on');
+  save(); myLayout(); myFill();
+}
+function myEnsure() { if (!S.my.game) myStartFromQueue(); else myFill(); }
+function myNew() {
+  const g = S.my.game;
+  const go = () => { S.my.game = null; myStartFromQueue(); };
+  if (g && g.started && !g.done) confirmBox('今の問題をやめて、新しい問題にしますか？', go); else go();
+}
+function mySetting(kind, v) {
+  const g = S.my.game;
+  const apply = () => { S.my[kind] = v; mySyncSeg(); S.my.game = null; myStartFromQueue(); };
+  if (S.my[kind] === v) return;
+  if (g && g.started && !g.done) confirmBox('今の問題をやめて、' + (kind === 'size' ? v + '×' + v : LV[v]) + 'で始めますか？', apply);
+  else apply();
+}
+function mySyncSeg() {
+  document.querySelectorAll('#my-level button').forEach((b) => b.classList.toggle('on', +b.dataset.v === S.my.level));
+  document.querySelectorAll('#my-size button').forEach((b) => b.classList.toggle('on', +b.dataset.v === S.my.size));
+  $('my-mode').innerHTML = '<small>MODE</small>' + (S.my.mode === 1 ? '線' : '×');
+  $('my-mode').classList.toggle('flag', S.my.mode !== 1);
+}
+document.querySelectorAll('#my-level button').forEach((b) => b.onclick = () => mySetting('level', +b.dataset.v));
+document.querySelectorAll('#my-size button').forEach((b) => b.onclick = () => mySetting('size', +b.dataset.v));
+
+function myLayout() {
+  const g = S.my.game; mySyncSeg();
+  if (!g) { yv.ctx.clearRect(0, 0, yv.cv.width, yv.cv.height); return; }
+  const avail = Math.min($('my-board').clientWidth - 6, 560);
+  const cs = Math.floor(avail / (g.W + 1));
+  yv.cs = cs; yv.pad = Math.round((avail - cs * g.W) / 2);
+  const w = cs * g.W + yv.pad * 2, h = cs * g.H + yv.pad * 2;
+  yv.dpr = window.devicePixelRatio || 1;
+  yv.cv.width = Math.round(w * yv.dpr); yv.cv.height = Math.round(h * yv.dpr);
+  yv.cv.style.width = w + 'px'; yv.cv.style.height = h + 'px';
+  myDraw(); myStatus(); mySaveInfo();
+}
+function myStatus() {
+  const g = S.my.game; if (!g) return;
+  $('my-time').textContent = fmt(g.t);
+  const tag = $('my-tag');
+  tag.textContent = LV[g.level] + ' ' + (g.W + 1) + '×' + (g.H + 1) + (g.assist ? '・ヒント使用' : '');
+  tag.classList.toggle('assist', g.assist);
+}
+
+function myDraw() {
+  const g = S.my.game; if (!g) return;
+  const G = EPGen.geo(g.W, g.H), ctx = yv.ctx, cs = yv.cs, pad = yv.pad;
+  ctx.setTransform(yv.dpr, 0, 0, yv.dpr, 0, 0);
+  const w = cs * g.W + pad * 2, h = cs * g.H + pad * 2;
+  ctx.fillStyle = '#fbf8f1'; ctx.fillRect(0, 0, w, h);
+  const X = (x) => pad + x * cs, Y = (y) => pad + y * cs;
+  // マス目の線は描かない（線を引ける場所＝マスの中心どうしを結ぶ薄い線が盤目になる）
+  const ex = (e) => { const a = G.edgeVerts[2 * e], b = G.edgeVerts[2 * e + 1]; return [a % (g.W + 1), (a / (g.W + 1)) | 0, b % (g.W + 1), (b / (g.W + 1)) | 0]; };
+  // 解けたら内側を塗る
+  if (g.done) {
+    ctx.fillStyle = 'rgba(251,191,36,.55)';
+    for (let y = 0; y < g.H; y++) { let ins = false; for (let x = 0; x < g.W; x++) { if (g.sol[G.vE(x, y)] === 1) ins = !ins; if (ins) ctx.fillRect(X(x), Y(y), cs, cs); } }
+  }
+  // 数字の数え
+  const L = new Array(G.C).fill(0), XX = new Array(G.C).fill(0);
+  for (let e = 0; e < G.E; e++) { if (!g.marks[e]) continue; for (const c of G.edgeCells[e]) { if (g.marks[e] > 0) L[c]++; else XX[c]++; } }
+  // 間違いのマス（多すぎ）
+  ctx.fillStyle = '#fbbf24';
+  for (let c = 0; c < G.C; c++) {
+    const k = g.clues[c]; if (k < 0 || g.done) continue;
+    if (L[c] > k || XX[c] > 4 - k) ctx.fillRect(X(c % g.W) + 2, Y((c / g.W) | 0) + 2, cs - 4, cs - 4);
+  }
+  // ヒント
+  if (yv.hint != null) {
+    const [x1, y1, x2, y2] = ex(yv.hint.edge);
+    ctx.strokeStyle = '#fbbf24'; ctx.lineCap = 'round'; ctx.lineWidth = Math.max(10, cs * 0.42);
+    ctx.beginPath(); ctx.moveTo(X(x1), Y(y1)); ctx.lineTo(X(x2), Y(y2)); ctx.stroke();
+    ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+    ctx.strokeRect(Math.min(X(x1), X(x2)) - cs * 0.24, Math.min(Y(y1), Y(y2)) - cs * 0.24, Math.abs(X(x2) - X(x1)) + cs * 0.48, Math.abs(Y(y2) - Y(y1)) + cs * 0.48);
+    ctx.setLineDash([]);
+  }
+  if (yv.wrong) {
+    for (const e of yv.wrong) {
+      const [x1, y1, x2, y2] = ex(e);
+      ctx.strokeStyle = '#fbbf24'; ctx.lineCap = 'round'; ctx.lineWidth = Math.max(10, cs * 0.42);
+      ctx.beginPath(); ctx.moveTo(X(x1), Y(y1)); ctx.lineTo(X(x2), Y(y2)); ctx.stroke();
+    }
+  }
+  // 線と×
+  ctx.lineCap = 'round';
+  // まだ決めていない辺＝薄い盤目。ただし引いた線のせいで引けなくなった辺は自動で消す
+  //  （線が2本集まった点から出る辺／数字の数だけ線を引き終えたマスの辺）
+  const sp = (g.saves && g.saves.length) ? g.saves[g.saves.length - 1].marks : null;
+  if (!g.done) {
+    const vdeg = new Array(G.V).fill(0);
+    for (let e = 0; e < G.E; e++) if (g.marks[e] > 0) { vdeg[G.edgeVerts[2 * e]]++; vdeg[G.edgeVerts[2 * e + 1]]++; }
+    const blocked = (e) => {
+      if (vdeg[G.edgeVerts[2 * e]] >= 2 || vdeg[G.edgeVerts[2 * e + 1]] >= 2) return true;
+      for (const c of G.edgeCells[e]) { const k = g.clues[c]; if (k >= 0 && L[c] >= k) return true; }
+      return false;
+    };
+    // 行き止まりの辺も消す：線の無い点から、まだ引ける辺が1本しか出ていなければ、その辺は輪にならない（消すとまた別の行き止まりができるので繰り返す）
+    const avail = new Uint8Array(G.E);
+    const loopE = myLoopEdges(g);
+    for (let e = 0; e < G.E; e++) avail[e] = (g.marks[e] === 0 && !blocked(e) && !loopE.has(e)) ? 1 : 0;
+    for (let changed = true, guard = 0; changed && guard < 200; guard++) {
+      changed = false;
+      for (let v = 0; v < G.V; v++) {
+        if (vdeg[v] !== 0 || g.circ[v]) continue;
+        let n = 0, last = -1;
+        for (const e of G.vertEdges[v]) if (avail[e]) { n++; last = e; }
+        if (n === 1) { avail[last] = 0; changed = true; }
+      }
+    }
+    ctx.strokeStyle = '#cdc5b4'; ctx.lineWidth = Math.max(1.5, cs * 0.05); ctx.lineCap = 'butt';
+    ctx.beginPath();
+    for (let e = 0; e < G.E; e++) { if (!avail[e]) continue; const [x1, y1, x2, y2] = ex(e); ctx.moveTo(X(x1), Y(y1)); ctx.lineTo(X(x2), Y(y2)); }
+    ctx.stroke();
+    // ×の印
+    ctx.strokeStyle = '#6b6b6b'; ctx.lineWidth = Math.max(1.5, cs * 0.05); ctx.lineCap = 'round';
+    for (let e = 0; e < G.E; e++) {
+      if (g.marks[e] !== -1 && !(g.marks[e] === 0 && loopE.has(e))) continue;
+      const [x1, y1, x2, y2] = ex(e); const mx = (X(x1) + X(x2)) / 2, my = (Y(y1) + Y(y2)) / 2, r = cs * 0.1;
+      ctx.beginPath(); ctx.moveTo(mx - r, my - r); ctx.lineTo(mx + r, my + r); ctx.moveTo(mx + r, my - r); ctx.lineTo(mx - r, my + r); ctx.stroke();
+    }
+  }
+  ctx.lineCap = 'round';
+  for (let e = 0; e < G.E; e++) {
+    if (g.marks[e] <= 0) continue;
+    const [x1, y1, x2, y2] = ex(e);
+    // セーブポイントより後に引いた線は水色（仮の線）
+    ctx.strokeStyle = g.done ? '#1a1a1a' : (sp && sp[e] !== 1 ? '#7fa7ff' : '#1d4ed8');
+    ctx.lineWidth = Math.max(4, cs * 0.13);
+    ctx.beginPath(); ctx.moveTo(X(x1), Y(y1)); ctx.lineTo(X(x2), Y(y2)); ctx.stroke();
+  }
+  // 丸（決まりに合わない丸は黄色のふち）と、3本以上集まった点
+  const deg = new Array(G.V).fill(0);
+  for (let e = 0; e < G.E; e++) if (g.marks[e] > 0) { deg[G.edgeVerts[2 * e]]++; deg[G.edgeVerts[2 * e + 1]]++; }
+  const X2 = EPGen.masyuExt(g.W + 1, g.H + 1, g.circ);
+  const dE = (v, d) => X2.dirEdge[v * 4 + d], on = (e) => e >= 0 && g.marks[e] > 0;
+  for (let y = 0; y <= g.H; y++) for (let x = 0; x <= g.W; x++) {
+    const v = y * (g.W + 1) + x, k = g.circ[v];
+    let bad = deg[v] > 2;
+    if (k && !g.done) {
+      const L0 = on(dE(v, 0)), R0 = on(dE(v, 1)), U0 = on(dE(v, 2)), D0 = on(dE(v, 3));
+      if (k === 1 && (L0 || R0) && (U0 || D0)) bad = true;          // 白丸で曲がった
+      if (k === 2 && ((L0 && R0) || (U0 && D0))) bad = true;        // 黒丸でまっすぐ
+      if (deg[v] === 2 && !EPGen.circleOK(X2, (e) => g.marks[e] > 0, v)) {
+        // 白丸の前後が両方まっすぐ／黒丸の先が曲がった：線が両側とも決まっているときだけ知らせる
+        bad = bad || (k === 1 ? true : [0, 1, 2, 3].some((d) => { if (!on(dE(v, d))) return false; const n = X2.nbV[v * 4 + d]; const f = dE(n, d); return f < 0 || g.marks[f] === -1 || [0, 1, 2, 3].some((p2) => (p2 >> 1) !== (d >> 1) && on(dE(n, p2))); }));
+      }
+    }
+    if (bad && !g.done) { ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(X(x), Y(y), cs * 0.44, 0, 7); ctx.fill(); }
+    if (k) {
+      ctx.beginPath(); ctx.arc(X(x), Y(y), cs * 0.3, 0, 7);
+      ctx.fillStyle = k === 2 ? '#1a1a1a' : '#fbf8f1'; ctx.fill();
+      ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = Math.max(2, cs * 0.07); ctx.stroke();
+    }
+  }
+  // 丸の上にも線が見えるように、線をもう一度描く
+  ctx.lineCap = 'round';
+  for (let e = 0; e < G.E; e++) {
+    if (g.marks[e] <= 0) continue;
+    const a = G.edgeVerts[2 * e], b = G.edgeVerts[2 * e + 1];
+    if (!g.circ[a] && !g.circ[b]) continue;
+    const [x1, y1, x2, y2] = ex(e);
+    ctx.strokeStyle = g.done ? '#1a1a1a' : (sp && sp[e] !== 1 ? '#7fa7ff' : '#1d4ed8');
+    ctx.lineWidth = Math.max(4, cs * 0.13);
+    ctx.beginPath(); ctx.moveTo(X(x1), Y(y1)); ctx.lineTo(X(x2), Y(y2)); ctx.stroke();
+  }
+}
+
+// 入力
+let yd = null;
+function myPos(ev) { const r = yv.cv.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; }
+function myEdgeAt(px, py) {
+  const g = S.my.game, G = EPGen.geo(g.W, g.H);
+  const gx = (px - yv.pad) / yv.cs, gy = (py - yv.pad) / yv.cs;
+  let best = -1, bd = 0.5;
+  const hy = Math.round(gy), hx = Math.floor(gx);
+  if (hy >= 0 && hy <= g.H && hx >= 0 && hx < g.W) { const d = Math.abs(gy - hy); if (d < bd) { bd = d; best = G.hE(hx, hy); } }
+  const vx = Math.round(gx), vy = Math.floor(gy);
+  if (vx >= 0 && vx <= g.W && vy >= 0 && vy < g.H) { const d = Math.abs(gx - vx); if (d < bd) { bd = d; best = G.vE(vx, vy); } }
+  return best;
+}
+function myVertAt(px, py, strict) {
+  const g = S.my.game;
+  const gx = (px - yv.pad) / yv.cs, gy = (py - yv.pad) / yv.cs;
+  const x = Math.max(0, Math.min(g.W, Math.round(gx))), y = Math.max(0, Math.min(g.H, Math.round(gy)));
+  if (strict && Math.hypot(gx - x, gy - y) > 0.4) return null;
+  return [x, y];
+}
+// 線を引くと輪が閉じてしまう辺（答えが完成する最後の1本は除く）
+function myLoopEdges(g) {
+  const G = EPGen.geo(g.W, g.H), par = new Int32Array(G.V), deg = new Int8Array(G.V), cnt = new Int32Array(G.V);
+  for (let i = 0; i < G.V; i++) par[i] = i;
+  const f = (x) => { while (par[x] !== x) { par[x] = par[par[x]]; x = par[x]; } return x; };
+  let lines = 0;
+  for (let e = 0; e < G.E; e++) if (g.marks[e] > 0) {
+    lines++; const a = G.edgeVerts[2 * e], b = G.edgeVerts[2 * e + 1]; deg[a]++; deg[b]++;
+    const ra = f(a), rb = f(b); if (ra !== rb) { par[ra] = rb; cnt[rb] += cnt[ra] + 1; } else cnt[ra]++;
+  }
+  const out = new Set();
+  if (!lines) return out;
+  const Lc = new Array(G.C).fill(0);
+  for (let e = 0; e < G.E; e++) if (g.marks[e] > 0) for (const c of G.edgeCells[e]) Lc[c]++;
+  for (let e = 0; e < G.E; e++) {
+    if (g.marks[e] > 0) continue;
+    const a = G.edgeVerts[2 * e], b = G.edgeVerts[2 * e + 1];
+    // 両端が同じ線の上（端でも途中の点でも）＝引くと輪が閉じる
+    if (!deg[a] || !deg[b] || f(a) !== f(b)) continue;
+    // この1本で完成するなら引ける（両端とも線の端のときだけ）
+    let complete = deg[a] === 1 && deg[b] === 1 && cnt[f(a)] === lines;
+    if (complete) { const X = EPGen.masyuExt(g.W + 1, g.H + 1, g.circ); const line = (x) => x === e || g.marks[x] > 0; for (let v = 0; v < g.circ.length; v++) if (g.circ[v] && !EPGen.circleOK(X, line, v)) { complete = false; break; } }
+    if (!complete) out.add(e);
+  }
+  return out;
+}
+function mySet(e, val, ch) {
+  const g = S.my.game; if (g.marks[e] === val) return;
+  ch.push([e, g.marks[e], val]); g.marks[e] = val;
+}
+function myCommit(ch) {
+  const g = S.my.game;
+  if (!ch.length) return;
+  g.undo.push(ch); if (g.undo.length > 500) g.undo.shift();
+  yv.hint = null; yv.wrong = null;
+  if (!g.started) { g.started = true; stat(myKey(g.W + 1, g.level)).played++; }
+  myCheck(); save(); myDraw();
+}
+function myCheck() {
+  const g = S.my.game;
+  for (let e = 0; e < g.marks.length; e++) if ((g.marks[e] > 0) !== (g.sol[e] > 0)) return;
+  g.done = true;
+  const st = stat(myKey(g.W + 1, g.level));
+  st.cleared++; st.sum += g.t;
+  let nb = false;
+  if (g.assist) st.assisted++; else if (st.best == null || g.t < st.best) { st.best = g.t; nb = true; }
+  save(true); myDraw(); myStatus();
+  if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+  setTimeout(() => modal(`<h3 class="win">Clear!</h3>
+    <p class="big">${fmt(g.t)}${nb ? '<span class="nb">NEW BEST</span>' : ''}</p>
+    <p>${LV[g.level]} ${g.W + 1}×${g.H + 1}・クリア ${st.cleared}回・ベスト ${fmt(st.best)}${g.assist ? '<br>（ヒントを使ったのでベストには入りません）' : ''}</p>
+    <div class="row"><button class="btn" id="md-see">盤面を見る</button><button class="btn blue" id="md-next">次の問題</button></div>`,
+    { 'md-next': () => { S.my.game = null; myStartFromQueue(); }, 'md-see': null }), 350);
+}
+
+// タップだけで線を引く（なぞり書きはしない：拡大・移動の指の動きで線が引かれないように）
+const myTouches = new Set();
+yv.cv.addEventListener('pointerdown', (ev) => {
+  myTouches.add(ev.pointerId);
+  const g = S.my.game; if (!g || g.done) return;
+  if (myTouches.size > 1) { yd = null; return; } // 2本指＝拡大・移動
+  yd = { x: ev.clientX, y: ev.clientY, pos: myPos(ev), t: Date.now() };
+});
+yv.cv.addEventListener('pointermove', (ev) => {
+  if (yd && Math.hypot(ev.clientX - yd.x, ev.clientY - yd.y) > 10) yd = null; // 指が動いた＝移動
+});
+function myEnd(ev) { myTouches.delete(ev.pointerId); }
+yv.cv.addEventListener('pointerup', (ev) => {
+  const d = yd; yd = null; const multi = myTouches.size > 1; myEnd(ev);
+  if (!d || multi || Date.now() - d.t > 600) return;
+  const g = S.my.game; if (!g || g.done) return;
+  const e = myEdgeAt(d.pos[0], d.pos[1]); if (e < 0) return;
+  if (S.my.mode === 1 && g.marks[e] === 0 && myLoopEdges(g).has(e)) { toast('ここに線を引くと輪が閉じてしまいます'); return; }
+  const m = g.marks[e], ch = [];
+  const nv = S.my.mode === 1 ? (m === 1 ? -1 : m === -1 ? 0 : 1) : (m === -1 ? 0 : -1);
+  mySet(e, nv, ch); myCommit(ch);
+});
+yv.cv.addEventListener('pointercancel', (ev) => { yd = null; myEnd(ev); });
+
+$('my-mode').onclick = () => { S.my.mode = S.my.mode === 1 ? -1 : 1; mySyncSeg(); save(); };
+function mySaveInfo() {
+  const g = S.my.game, n = g && g.saves ? g.saves.length : 0;
+  $('my-saveinfo').textContent = n ? 'セーブ ' + n + 'こ' : 'セーブなし';
+  $('my-load').disabled = !n;
+}
+$('my-save').onclick = () => {
+  const g = S.my.game; if (!g || g.done) return;
+  if (!g.saves) g.saves = [];
+  const last = g.saves[g.saves.length - 1];
+  if (last && sameMarks(last.marks, g.marks)) { toast('この盤面はセーブ済みです'); return; }
+  g.saves.push({ marks: g.marks.slice() }); if (g.saves.length > 9) g.saves.shift();
+  save(); mySaveInfo(); myDraw(); toast('セーブしました（' + g.saves.length + '）', 1500);
+};
+$('my-load').onclick = () => {
+  const g = S.my.game; if (!g || g.done || !g.saves || !g.saves.length) return;
+  let k = g.saves.length - 1;
+  // 最後のセーブと同じ盤面なら、そのセーブを外して1つ前へ
+  if (sameMarks(g.saves[k].marks, g.marks)) {
+    if (k === 0) { toast('これより前のセーブはありません'); return; }
+    g.saves.pop(); k--;
+  }
+  const tgt = g.saves[k].marks, ch = [];
+  for (let e = 0; e < g.marks.length; e++) if (g.marks[e] !== tgt[e]) { ch.push([e, g.marks[e], tgt[e]]); g.marks[e] = tgt[e]; }
+  if (ch.length) { g.undo.push(ch); if (g.undo.length > 500) g.undo.shift(); }
+  yv.hint = null; yv.wrong = null;
+  save(); mySaveInfo(); myDraw(); toast('セーブ ' + (k + 1) + ' に戻りました', 1500);
+};
+$('my-undo').onclick = () => {
+  const g = S.my.game; if (!g || g.done) return;
+  const ch = g.undo.pop(); if (!ch) { toast('戻せる手がありません'); return; }
+  for (let i = ch.length - 1; i >= 0; i--) g.marks[ch[i][0]] = ch[i][1];
+  yv.hint = null; yv.wrong = null; save(); myDraw();
+};
+$('my-hint').onclick = () => {
+  const g = S.my.game; if (!g || g.done) return;
+  const wrong = [];
+  for (let e = 0; e < g.marks.length; e++) { const m = g.marks[e]; if (m && (m > 0) !== (g.sol[e] > 0)) wrong.push(e); }
+  g.assist = true; myStatus();
+  if (wrong.length) { yv.wrong = wrong; yv.hint = null; myDraw(); toast('間違っている印が ' + wrong.length + ' か所あります（黄色）'); save(); return; }
+  const h = EPGen.masyuHint(g.W + 1, g.H + 1, g.circ, Int8Array.from(g.marks));
+  if (!h) { toast('ヒントが見つかりませんでした'); return; }
+  yv.hint = h; yv.wrong = null; myDraw();
+  toast(h.val > 0 ? '黄色の辺は「線」になります' : '黄色の辺には線が来ません（×）', 3200);
+  save();
+};
+$('my-new').onclick = myNew;
+
+/* =====================================================
+   ぬりかべ
+   ===================================================== */
+const rv = { cv: $('r-canvas'), cs: 30, dpr: 1, hint: null, wrong: null };
+rv.ctx = rv.cv.getContext('2d');
+const nrKey = (size, level) => 'N' + size + '-' + level;
+let nrWaiting = null;
+
+function nrFill() {
+  const k = nrKey(S.nr.size, S.nr.level);
+  const q = S.queue[k] || (S.queue[k] = []);
+  if (q.length >= 2 || filling[k]) return;
+  filling[k] = true;
+  const size = S.nr.size, level = S.nr.level;
+  request({ type: 'nuri', W: size, H: size, level }).then((r) => {
+    filling[k] = false;
+    if (r.puzzle) { (S.queue[k] || (S.queue[k] = [])).push(r.puzzle); save(); }
+    if (nrWaiting === k && r.puzzle) { nrWaiting = null; nrStartFromQueue(); }
+    nrFill();
+  });
+}
+function nrStartFromQueue() {
+  const k = nrKey(S.nr.size, S.nr.level), q = S.queue[k] || [];
+  if (!q.length) { nrWaiting = k; $('nr-busy').classList.add('on'); nrFill(); return; }
+  const p = q.shift();
+  S.nr.game = { W: p.W, H: p.H, level: S.nr.level, grade: p.level, nums: p.nums, sol: p.sol, marks: new Array(p.W * p.H).fill(0), undo: [], saves: [], t: 0, started: false, assist: false, done: false };
+  rv.hint = null; rv.wrong = null;
+  $('nr-busy').classList.remove('on');
+  save(); nrLayout(); nrFill();
+}
+function nrEnsure() { if (!S.nr.game) nrStartFromQueue(); else nrFill(); }
+function nrNew() {
+  const g = S.nr.game;
+  const go = () => { S.nr.game = null; nrStartFromQueue(); };
+  if (g && g.started && !g.done) confirmBox('今の問題をやめて、新しい問題にしますか？', go); else go();
+}
+function nrSetting(kind, v) {
+  const g = S.nr.game;
+  const apply = () => { S.nr[kind] = v; nrSync(); S.nr.game = null; nrStartFromQueue(); };
+  if (S.nr[kind] === v) return;
+  if (g && g.started && !g.done) confirmBox('今の問題をやめて、' + (kind === 'size' ? v + '×' + v : LV[v]) + 'で始めますか？', apply);
+  else apply();
+}
+function nrSync() {
+  document.querySelectorAll('#nr-level button').forEach((b) => b.classList.toggle('on', +b.dataset.v === S.nr.level));
+  document.querySelectorAll('#nr-size button').forEach((b) => b.classList.toggle('on', +b.dataset.v === S.nr.size));
+  document.querySelectorAll('#nr-tap button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.nr.mode));
+  $('nr-mode').innerHTML = '<small>TAP</small>' + (S.nr.mode === 'black' ? '■ 黒' : '・ 白');
+  $('nr-mode').classList.toggle('flag', S.nr.mode !== 'black');
+}
+document.querySelectorAll('#nr-level button').forEach((b) => b.onclick = () => nrSetting('level', +b.dataset.v));
+document.querySelectorAll('#nr-size button').forEach((b) => b.onclick = () => nrSetting('size', +b.dataset.v));
+document.querySelectorAll('#nr-tap button').forEach((b) => b.onclick = () => { S.nr.mode = b.dataset.v; nrSync(); save(); });
+
+function nrLayout() {
+  const g = S.nr.game; nrSync();
+  if (!g) { rv.ctx.clearRect(0, 0, rv.cv.width, rv.cv.height); return; }
+  const avail = Math.min($('nr-board').clientWidth - 6, 560);
+  const cs = Math.floor(avail / g.W);
+  rv.cs = cs;
+  const w = cs * g.W, h = cs * g.H;
+  rv.dpr = window.devicePixelRatio || 1;
+  rv.cv.width = Math.round(w * rv.dpr); rv.cv.height = Math.round(h * rv.dpr);
+  rv.cv.style.width = w + 'px'; rv.cv.style.height = h + 'px';
+  nrDraw(); nrStatus(); nrSaveInfo();
+}
+function nrStatus() {
+  const g = S.nr.game; if (!g) return;
+  $('nr-time').textContent = fmt(g.t);
+  const tag = $('nr-tag');
+  tag.textContent = LV[g.level] + ' ' + g.W + '×' + g.H + (g.assist ? '・ヒント使用' : '');
+  tag.classList.toggle('assist', g.assist);
+}
+// 決まりに合わないマス（2×2の黒・数字が2つある島・大きすぎる島・もう広げられないのに小さい島）
+function nrErrors(g) {
+  const N = g.W * g.H, bad = new Uint8Array(N), nb = (c) => { const x = c % g.W, y = (c / g.W) | 0, r = []; if (x > 0) r.push(c - 1); if (x < g.W - 1) r.push(c + 1); if (y > 0) r.push(c - g.W); if (y < g.H - 1) r.push(c + g.W); return r; };
+  const black = (c) => g.marks[c] === 2;
+  const white = (c) => g.nums[c] > 0 || g.marks[c] === 1;
+  for (let y = 0; y < g.H - 1; y++) for (let x = 0; x < g.W - 1; x++) {
+    const q = [y * g.W + x, y * g.W + x + 1, (y + 1) * g.W + x, (y + 1) * g.W + x + 1];
+    if (q.every(black)) q.forEach((c) => bad[c] = 1);
+  }
+  const seen = new Uint8Array(N);
+  for (let c = 0; c < N; c++) {
+    if (!white(c) || seen[c]) continue;
+    const cells = [c]; seen[c] = 1; let nn = 0, num = 0, open = false;
+    for (let i = 0; i < cells.length; i++) for (const y of [cells[i], ...nb(cells[i])]) {
+      if (y === cells[i]) { if (g.nums[y]) { nn++; num = g.nums[y]; } continue; }
+      if (white(y)) { if (!seen[y]) { seen[y] = 1; cells.push(y); } }
+      else if (!black(y)) open = true;
+    }
+    if (nn > 1 || (nn === 1 && cells.length > num) || (nn === 1 && !open && cells.length < num) || (nn === 0 && !open)) cells.forEach((x) => bad[x] = 1);
+  }
+  return bad;
+}
+function nrDraw() {
+  const g = S.nr.game; if (!g) return;
+  const ctx = rv.ctx, cs = rv.cs, N = g.W * g.H;
+  ctx.setTransform(rv.dpr, 0, 0, rv.dpr, 0, 0);
+  ctx.fillStyle = '#fbf8f1'; ctx.fillRect(0, 0, cs * g.W, cs * g.H);
+  const sp = (g.saves && g.saves.length) ? g.saves[g.saves.length - 1].marks : null;
+  const bad = g.done ? new Uint8Array(N) : nrErrors(g);
+  for (let c = 0; c < N; c++) {
+    const x = (c % g.W) * cs, y = ((c / g.W) | 0) * cs;
+    if (bad[c]) { ctx.fillStyle = '#fbbf24'; ctx.fillRect(x, y, cs, cs); }
+    if (g.marks[c] === 2) {
+      // セーブより後に塗った黒は紺（仮の黒）
+      ctx.fillStyle = g.done ? '#1a1a1a' : (sp && sp[c] !== 2 ? '#3b5bb5' : '#1a1a1a');
+      const m = bad[c] ? Math.max(3, cs * 0.12) : 0;
+      ctx.fillRect(x + m, y + m, cs - 2 * m, cs - 2 * m);
+    } else if (g.marks[c] === 1 && !g.nums[c]) {
+      ctx.fillStyle = sp && sp[c] !== 1 ? '#7fa7ff' : '#6b6b6b';
+      ctx.beginPath(); ctx.arc(x + cs / 2, y + cs / 2, Math.max(2.5, cs * 0.09), 0, 7); ctx.fill();
+    }
+  }
+  if (g.done) { ctx.fillStyle = 'rgba(251,191,36,.45)'; for (let c = 0; c < N; c++) if (g.sol[c] === 1) ctx.fillRect((c % g.W) * cs, ((c / g.W) | 0) * cs, cs, cs); }
+  // マス目
+  ctx.strokeStyle = 'rgba(26,26,26,.45)'; ctx.lineWidth = 1; ctx.beginPath();
+  for (let x = 0; x <= g.W; x++) { ctx.moveTo(x * cs + 0.5, 0); ctx.lineTo(x * cs + 0.5, g.H * cs); }
+  for (let y = 0; y <= g.H; y++) { ctx.moveTo(0, y * cs + 0.5); ctx.lineTo(g.W * cs, y * cs + 0.5); }
+  ctx.stroke();
+  // 数字
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = Math.round(cs * 0.56) + "px 'Archivo Black', sans-serif";
+  for (let c = 0; c < N; c++) if (g.nums[c]) { ctx.fillStyle = '#1a1a1a'; ctx.fillText(String(g.nums[c]), (c % g.W) * cs + cs / 2, ((c / g.W) | 0) * cs + cs / 2 + cs * 0.03); }
+  const ring = (c) => {
+    const x = (c % g.W) * cs, y = ((c / g.W) | 0) * cs;
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = Math.max(4, cs * 0.16); ctx.strokeRect(x + 3, y + 3, cs - 6, cs - 6);
+    ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2; ctx.strokeRect(x, y, cs, cs);
+  };
+  if (rv.hint) ring(rv.hint.cell);
+  if (rv.wrong) rv.wrong.forEach(ring);
+}
+
+// 入力（タップだけ。指2本・動いた指・長押しでは塗らない）
+let rd = null; const nrTouches = new Set();
+rv.cv.addEventListener('pointerdown', (ev) => {
+  nrTouches.add(ev.pointerId);
+  const g = S.nr.game; if (!g || g.done) return;
+  if (nrTouches.size > 1) { rd = null; return; }
+  rd = { x: ev.clientX, y: ev.clientY, t: Date.now() };
+});
+rv.cv.addEventListener('pointermove', (ev) => { if (rd && Math.hypot(ev.clientX - rd.x, ev.clientY - rd.y) > 10) rd = null; });
+rv.cv.addEventListener('pointerup', (ev) => {
+  const d = rd; rd = null; const multi = nrTouches.size > 1; nrTouches.delete(ev.pointerId);
+  if (!d || multi || Date.now() - d.t > 600) return;
+  const g = S.nr.game; if (!g || g.done) return;
+  const r = rv.cv.getBoundingClientRect();
+  const x = Math.floor((ev.clientX - r.left) / rv.cs), y = Math.floor((ev.clientY - r.top) / rv.cs);
+  if (x < 0 || y < 0 || x >= g.W || y >= g.H) return;
+  const c = y * g.W + x; if (g.nums[c]) return;
+  const m = g.marks[c];
+  const nv = S.nr.mode === 'black' ? (m === 0 ? 2 : m === 2 ? 1 : 0) : (m === 0 ? 1 : m === 1 ? 2 : 0);
+  nrCommit([[c, m, nv]]); g.marks[c] = nv; nrAfter();
+});
+rv.cv.addEventListener('pointercancel', (ev) => { rd = null; nrTouches.delete(ev.pointerId); });
+function nrCommit(ch) {
+  const g = S.nr.game;
+  g.undo.push(ch); if (g.undo.length > 500) g.undo.shift();
+  rv.hint = null; rv.wrong = null;
+  if (!g.started) { g.started = true; stat(nrKey(g.W, g.level)).played++; }
+}
+function nrAfter() {
+  const g = S.nr.game;
+  for (let c = 0; c < g.marks.length; c++) if ((g.marks[c] === 2) !== (g.sol[c] === 2)) { save(); nrDraw(); return; }
+  g.done = true;
+  for (let c = 0; c < g.marks.length; c++) if (g.sol[c] === 1 && !g.nums[c]) g.marks[c] = 1;
+  const st = stat(nrKey(g.W, g.level));
+  st.cleared++; st.sum += g.t;
+  let nb = false;
+  if (g.assist) st.assisted++; else if (st.best == null || g.t < st.best) { st.best = g.t; nb = true; }
+  save(true); nrDraw(); nrStatus();
+  if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+  setTimeout(() => modal(`<h3 class="win">Clear!</h3>
+    <p class="big">${fmt(g.t)}${nb ? '<span class="nb">NEW BEST</span>' : ''}</p>
+    <p>${LV[g.level]} ${g.W}×${g.H}・クリア ${st.cleared}回・ベスト ${fmt(st.best)}${g.assist ? '<br>（ヒントを使ったのでベストには入りません）' : ''}</p>
+    <div class="row"><button class="btn" id="md-see">盤面を見る</button><button class="btn blue" id="md-next">次の問題</button></div>`,
+    { 'md-next': () => { S.nr.game = null; nrStartFromQueue(); }, 'md-see': null }), 350);
+}
+$('nr-mode').onclick = () => { S.nr.mode = S.nr.mode === 'black' ? 'dot' : 'black'; nrSync(); save(); toast(S.nr.mode === 'black' ? 'タップで黒く塗ります' : 'タップで「白（・）」の印を付けます', 1600); };
+function nrSaveInfo() {
+  const g = S.nr.game, n = g && g.saves ? g.saves.length : 0;
+  $('nr-saveinfo').textContent = n ? 'セーブ ' + n + 'こ' : 'セーブなし';
+  $('nr-load').disabled = !n;
+}
+$('nr-save').onclick = () => {
+  const g = S.nr.game; if (!g || g.done) return;
+  if (!g.saves) g.saves = [];
+  const last = g.saves[g.saves.length - 1];
+  if (last && sameMarks(last.marks, g.marks)) { toast('この盤面はセーブ済みです'); return; }
+  g.saves.push({ marks: g.marks.slice() }); if (g.saves.length > 9) g.saves.shift();
+  save(); nrSaveInfo(); nrDraw(); toast('セーブしました（' + g.saves.length + '）', 1500);
+};
+$('nr-load').onclick = () => {
+  const g = S.nr.game; if (!g || g.done || !g.saves || !g.saves.length) return;
+  let k = g.saves.length - 1;
+  if (sameMarks(g.saves[k].marks, g.marks)) {
+    if (k === 0) { toast('これより前のセーブはありません'); return; }
+    g.saves.pop(); k--;
+  }
+  const tgt = g.saves[k].marks, ch = [];
+  for (let c = 0; c < g.marks.length; c++) if (g.marks[c] !== tgt[c]) { ch.push([c, g.marks[c], tgt[c]]); g.marks[c] = tgt[c]; }
+  if (ch.length) { g.undo.push(ch); if (g.undo.length > 500) g.undo.shift(); }
+  rv.hint = null; rv.wrong = null;
+  save(); nrSaveInfo(); nrDraw(); toast('セーブ ' + (k + 1) + ' に戻りました', 1500);
+};
+$('nr-undo').onclick = () => {
+  const g = S.nr.game; if (!g || g.done) return;
+  const ch = g.undo.pop(); if (!ch) { toast('戻せる手がありません'); return; }
+  for (let i = ch.length - 1; i >= 0; i--) g.marks[ch[i][0]] = ch[i][1];
+  rv.hint = null; rv.wrong = null; save(); nrDraw();
+};
+$('nr-hint').onclick = () => {
+  const g = S.nr.game; if (!g || g.done) return;
+  const wrong = [];
+  for (let c = 0; c < g.marks.length; c++) { const m = g.marks[c]; if (m && m !== g.sol[c]) wrong.push(c); }
+  g.assist = true; nrStatus();
+  if (wrong.length) { rv.wrong = wrong; rv.hint = null; nrDraw(); toast('間違っている印が ' + wrong.length + ' か所あります（黄色）'); save(); return; }
+  const h = EPGen.nuriHint(g.W, g.H, g.nums, Int8Array.from(g.marks));
+  if (!h) { toast('ヒントが見つかりませんでした'); return; }
+  rv.hint = h; rv.wrong = null; nrDraw();
+  toast(h.val === 2 ? '黄色のマスは「黒」になります' : '黄色のマスは「白（・）」になります', 3200);
+  save();
+};
+$('nr-new').onclick = nrNew;
+
+/* =====================================================
    マインスイーパー
    ===================================================== */
 const mv = { cv: $('m-canvas'), cs: 30, dpr: 1, hint: null, wrongFlags: null };
@@ -862,6 +1493,10 @@ function renderStats() {
   $('st-sl').innerHTML = h;
   h = head; for (const lv of [1, 2, 3]) h += row(MLV[lv].name, 'M' + lv);
   $('st-mn').innerHTML = h;
+  h = head; for (const lv of [1, 2, 3]) for (const sz of [6, 8, 10]) h += row(LV[lv] + ' ' + sz + '×' + sz, myKey(sz, lv));
+  $('st-my').innerHTML = h;
+  h = head; for (const lv of [1, 2, 3]) for (const sz of [6, 8, 10]) h += row(LV[lv] + ' ' + sz + '×' + sz, nrKey(sz, lv));
+  $('st-nr').innerHTML = h;
 }
 $('bk-out').onclick = () => {
   const stamp = new Date(Date.now() + 9 * 3600e3).toISOString().replace(/[-:]/g, '').replace('T', '_').slice(0, 13);
@@ -880,12 +1515,50 @@ $('bk-file').onchange = async (ev) => {
   ev.target.value = '';
 };
 
+
+/* ---------- 遊び方 ---------- */
+const HELP = {
+  sl: `<h4>スリザーリンク</h4><ul>
+    <li>点と点を線でつないで、<b>1つの輪</b>を作ります。輪は枝分かれも交差もしません</li>
+    <li>数字は、そのマスの4辺のうち<b>線になる辺の数</b>。数字の無いマスは何本でもよい</li>
+    <li>辺をタップ＝線 → × → 消す。「×」モードではタップで×</li>
+    <li>引けなくなった辺の薄い盤目は自動で消え、輪が閉じてしまう辺には×が出ます</li>
+    <li>数字より線や×が多いマス、3本以上集まった点は黄色</li></ul>`,
+  mn: `<h4>マインスイーパー</h4><ul>
+    <li>地雷のないマスを全部開けばクリア。数字は<b>周りの8マスにある地雷の数</b></li>
+    <li>最初の1手は必ず安全。<b>どの盤面も当てずっぽうなしで最後まで解けます</b></li>
+    <li>「タップで」掘る／旗を立てるを選べます（長押しは反対の操作）</li>
+    <li>数字をタップ＝周りの旗の数が合っていれば残りをまとめて開く</li></ul>`,
+  my: `<h4>ましゅ</h4><ul>
+    <li>マスの中心どうしを縦横の線でつないで、<b>1つの輪</b>を作ります。輪は枝分かれも交差もしません</li>
+    <li>全部のマスを通る必要はありません。でも<b>丸のマスは必ず通ります</b></li>
+    <li><b>白丸○</b>：そこは<b>まっすぐ通り抜ける</b>。さらに、すぐ前かすぐ後ろのマス（少なくとも片方）で<b>曲がる</b></li>
+    <li><b>黒丸●</b>：そこで<b>直角に曲がる</b>。さらに、曲がった先の両方とも、<b>次のマスまでまっすぐ</b>進む</li></ul>
+    <div class="ex"><figure><svg viewBox="-1 -1 122 74" width="100%" style="max-width:170px"><rect x="0" y="0" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="0" y="24" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="0" y="48" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="24" y="0" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="24" y="24" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="24" y="48" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="48" y="0" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="48" y="24" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="48" y="48" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="72" y="0" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="72" y="24" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="72" y="48" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="96" y="0" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="96" y="24" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="96" y="48" width="24" height="24" fill="none" stroke="#d9cfba"/><path d="M12 36 L36 36 L60 36 L84 36 L84 60" fill="none" stroke="#1d4ed8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="60" cy="36" r="8" fill="#fbf8f1" stroke="#1a1a1a" stroke-width="2"/><path d="M36 36 L84 36" stroke="#1d4ed8" stroke-width="4"/></svg><figcaption>白丸：まっすぐ通って、となりで曲がる</figcaption></figure><figure><svg viewBox="-1 -1 98 98" width="100%" style="max-width:130px"><rect x="0" y="0" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="0" y="24" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="0" y="48" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="0" y="72" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="24" y="0" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="24" y="24" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="24" y="48" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="24" y="72" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="48" y="0" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="48" y="24" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="48" y="48" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="48" y="72" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="72" y="0" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="72" y="24" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="72" y="48" width="24" height="24" fill="none" stroke="#d9cfba"/><rect x="72" y="72" width="24" height="24" fill="none" stroke="#d9cfba"/><path d="M36 84 L36 60 L36 36 L60 36 L84 36" fill="none" stroke="#1d4ed8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="36" cy="36" r="8" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="2"/></svg><figcaption>黒丸：曲がって、両方とも1マスまっすぐ</figcaption></figure></div>
+    <ul><li>操作はスリザーリンクと同じ（タップ＝線 → × → 消す・セーブ・ヒント）</li>
+    <li>決まりに合わない丸は黄色になります</li></ul>`,
+  nr: `<h4>ぬりかべ</h4><ul>
+    <li>マスを黒く塗って、<b>数字の島</b>を作ります。数字のマスは白</li>
+    <li>数字1つにつき白い島が1つ。<b>島の大きさ（縦横につながった白いマスの数）は数字と同じ</b>。島どうしは縦横で接しません</li>
+    <li><b>黒いマスは全部、縦横で1つにつながります</b></li>
+    <li>黒が<b>2×2のかたまり</b>になってはいけません</li></ul>
+    <div class="ex"><figure><svg viewBox="-1 -1 106 106" width="100%" style="max-width:140px"><rect x="0" y="0" width="26" height="26" fill="#fbf8f1" stroke="#1a1a1a" stroke-width="1"/><text x="13" y="19" text-anchor="middle" font-family="Archivo Black,sans-serif" font-size="16" fill="#1a1a1a">3</text><rect x="26" y="0" width="26" height="26" fill="#fbf8f1" stroke="#1a1a1a" stroke-width="1"/><circle cx="39" cy="13" r="2.5" fill="#6b6b6b"/><rect x="52" y="0" width="26" height="26" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="1"/><rect x="78" y="0" width="26" height="26" fill="#fbf8f1" stroke="#1a1a1a" stroke-width="1"/><text x="91" y="19" text-anchor="middle" font-family="Archivo Black,sans-serif" font-size="16" fill="#1a1a1a">2</text><rect x="0" y="26" width="26" height="26" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="1"/><rect x="26" y="26" width="26" height="26" fill="#fbf8f1" stroke="#1a1a1a" stroke-width="1"/><circle cx="39" cy="39" r="2.5" fill="#6b6b6b"/><rect x="52" y="26" width="26" height="26" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="1"/><rect x="78" y="26" width="26" height="26" fill="#fbf8f1" stroke="#1a1a1a" stroke-width="1"/><circle cx="91" cy="39" r="2.5" fill="#6b6b6b"/><rect x="0" y="52" width="26" height="26" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="1"/><rect x="26" y="52" width="26" height="26" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="1"/><rect x="52" y="52" width="26" height="26" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="1"/><rect x="78" y="52" width="26" height="26" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="1"/><rect x="0" y="78" width="26" height="26" fill="#fbf8f1" stroke="#1a1a1a" stroke-width="1"/><text x="13" y="97" text-anchor="middle" font-family="Archivo Black,sans-serif" font-size="16" fill="#1a1a1a">1</text><rect x="26" y="78" width="26" height="26" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="1"/><rect x="52" y="78" width="26" height="26" fill="#fbf8f1" stroke="#1a1a1a" stroke-width="1"/><text x="65" y="97" text-anchor="middle" font-family="Archivo Black,sans-serif" font-size="16" fill="#1a1a1a">2</text><rect x="78" y="78" width="26" height="26" fill="#fbf8f1" stroke="#1a1a1a" stroke-width="1"/><circle cx="91" cy="91" r="2.5" fill="#6b6b6b"/></svg><figcaption>答えの例（・は白の印）</figcaption></figure></div>
+    <ul><li>タップ＝黒 → ・（ここは白の印）→ 消す。「タップで ・白の印」にすると・から</li>
+    <li>2×2の黒、数字が2つある島、大きすぎる島、もう広げられないのに小さい島は黄色</li>
+    <li>セーブより後に塗った黒は紺色で出ます</li></ul>`,
+};
+function showHelp(k) {
+  $('modal-card').classList.add('helpcard');
+  modal(HELP[k] + '<div class="row"><button class="btn blue" id="hp-ok">遊ぶ</button></div>', { 'hp-ok': () => $('modal-card').classList.remove('helpcard') });
+}
+document.querySelectorAll('[data-help]').forEach((b) => b.onclick = () => showHelp(b.dataset.help));
+
 /* ---------- 起動 ---------- */
-window.addEventListener('resize', () => { if (S.tab === 'sl') slLayout(); if (S.tab === 'mn') mnLayout(); });
+window.addEventListener('resize', () => { if (S.tab === 'sl') slLayout(); if (S.tab === 'mn') mnLayout(); if (S.tab === 'my') myLayout(); if (S.tab === 'nr') nrLayout(); });
 setTab(S.tab || 'sl');
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { slDraw(); mnDraw(); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { slDraw(); mnDraw(); myDraw(); nrDraw(); });
 // もう一方の遊びの問題も、裏で先に作っておく
-setTimeout(() => { slFill(); }, 800);
+setTimeout(() => { slFill(); myFill(); nrFill(); }, 800);
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => {});
 </script>
 </body>

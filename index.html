@@ -154,7 +154,7 @@ td:first-child{text-align:left;font-weight:700}
       <p><b>スリザーリンク</b>：点と点を線でつないで、1つの輪を作ります。数字は、そのマスの4辺のうち線になる辺の数。輪は枝分かれも交差もしません。</p>
       <ul>
         <li>辺をタップ＝線（もう一度で×、もう一度で消す）。指2本で拡大・指でずらしても線は引かれません</li>
-        <li>盤目は最初から薄く出ています。線を引いて、もう引けなくなった辺（線が2本集まった点から出る辺・数字の数だけ線を引き終えたマスの辺・どこにもつながらない行き止まりの辺）の盤目は自動で消えます</li>
+        <li>盤目は最初から薄く出ています。線を引いて、もう引けなくなった辺（線が2本集まった点から出る辺・数字の数だけ線を引き終えたマスの辺・どこにもつながらない行き止まりの辺）の盤目は自動で消えます。線を引くと輪が閉じてしまう辺には×が出て、線は引けません（答えが完成する最後の1本は引けます）</li>
         <li>「×」モードでタップ＝線が来ない印（線モードでも、線をもう一度タップすると×）</li>
         <li><b>セーブ</b>＝今の盤面を覚える。<b>戻る</b>＝最後のセーブまで一気に戻る（もう一度押すと、その前のセーブへ）。セーブより後に引いた線は水色で出ます（仮定を試すときに便利）</li>
         <li>数字の線が多すぎる・×が多すぎるマスは黄色になります</li>
@@ -405,7 +405,8 @@ function slDraw() {
     };
     // 行き止まりの辺も消す：線の無い点から、まだ引ける辺が1本しか出ていなければ、その辺は輪にならない（消すとまた別の行き止まりができるので繰り返す）
     const avail = new Uint8Array(G.E);
-    for (let e = 0; e < G.E; e++) avail[e] = (g.marks[e] === 0 && !blocked(e)) ? 1 : 0;
+    const loopE = slLoopEdges(g);
+    for (let e = 0; e < G.E; e++) avail[e] = (g.marks[e] === 0 && !blocked(e) && !loopE.has(e)) ? 1 : 0;
     for (let changed = true, guard = 0; changed && guard < 200; guard++) {
       changed = false;
       for (let v = 0; v < G.V; v++) {
@@ -422,7 +423,7 @@ function slDraw() {
     // ×の印
     ctx.strokeStyle = '#6b6b6b'; ctx.lineWidth = Math.max(1.5, cs * 0.05); ctx.lineCap = 'round';
     for (let e = 0; e < G.E; e++) {
-      if (g.marks[e] !== -1) continue;
+      if (g.marks[e] !== -1 && !(g.marks[e] === 0 && loopE.has(e))) continue;
       const [x1, y1, x2, y2] = ex(e); const mx = (X(x1) + X(x2)) / 2, my = (Y(y1) + Y(y2)) / 2, r = cs * 0.1;
       ctx.beginPath(); ctx.moveTo(mx - r, my - r); ctx.lineTo(mx + r, my + r); ctx.moveTo(mx + r, my - r); ctx.lineTo(mx - r, my + r); ctx.stroke();
     }
@@ -475,6 +476,31 @@ function slVertAt(px, py, strict) {
   if (strict && Math.hypot(gx - x, gy - y) > 0.4) return null;
   return [x, y];
 }
+// 線を引くと輪が閉じてしまう辺（答えが完成する最後の1本は除く）
+function slLoopEdges(g) {
+  const G = EPGen.geo(g.W, g.H), par = new Int32Array(G.V), deg = new Int8Array(G.V), cnt = new Int32Array(G.V);
+  for (let i = 0; i < G.V; i++) par[i] = i;
+  const f = (x) => { while (par[x] !== x) { par[x] = par[par[x]]; x = par[x]; } return x; };
+  let lines = 0;
+  for (let e = 0; e < G.E; e++) if (g.marks[e] > 0) {
+    lines++; const a = G.edgeVerts[2 * e], b = G.edgeVerts[2 * e + 1]; deg[a]++; deg[b]++;
+    const ra = f(a), rb = f(b); if (ra !== rb) { par[ra] = rb; cnt[rb] += cnt[ra] + 1; } else cnt[ra]++;
+  }
+  const out = new Set();
+  if (!lines) return out;
+  const Lc = new Array(G.C).fill(0);
+  for (let e = 0; e < G.E; e++) if (g.marks[e] > 0) for (const c of G.edgeCells[e]) Lc[c]++;
+  for (let e = 0; e < G.E; e++) {
+    if (g.marks[e] > 0) continue;
+    const a = G.edgeVerts[2 * e], b = G.edgeVerts[2 * e + 1];
+    if (deg[a] !== 1 || deg[b] !== 1 || f(a) !== f(b)) continue;
+    // この1本で完成するなら引ける
+    let complete = cnt[f(a)] === lines;
+    if (complete) for (let c = 0; c < G.C; c++) { const k = g.clues[c]; if (k < 0) continue; const add = G.edgeCells[e].includes(c) ? 1 : 0; if (Lc[c] + add !== k) { complete = false; break; } }
+    if (!complete) out.add(e);
+  }
+  return out;
+}
 function slSet(e, val, ch) {
   const g = S.sl.game; if (g.marks[e] === val) return;
   ch.push([e, g.marks[e], val]); g.marks[e] = val;
@@ -521,6 +547,7 @@ sv.cv.addEventListener('pointerup', (ev) => {
   if (!d || multi || Date.now() - d.t > 600) return;
   const g = S.sl.game; if (!g || g.done) return;
   const e = slEdgeAt(d.pos[0], d.pos[1]); if (e < 0) return;
+  if (S.sl.mode === 1 && g.marks[e] === 0 && slLoopEdges(g).has(e)) { toast('ここに線を引くと輪が閉じてしまいます'); return; }
   const m = g.marks[e], ch = [];
   const nv = S.sl.mode === 1 ? (m === 1 ? -1 : m === -1 ? 0 : 1) : (m === -1 ? 0 : -1);
   slSet(e, nv, ch); slCommit(ch);

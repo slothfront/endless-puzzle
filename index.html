@@ -1,0 +1,869 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ENDLESS PUZZLE</title>
+<meta name="theme-color" content="#1d4ed8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f4f0e8; --paper2:#fbf8f1; --tan:#d9cfba; --black:#1a1a1a;
+  --blue:#1d4ed8; --yellow:#fbbf24; --sub:#6b6b6b; --faint:#a39d92;
+  --jp:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI",Meiryo,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--paper);color:var(--black)}
+body{font-family:var(--jp);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;
+  user-select:none;-webkit-user-select:none;min-height:100vh;overflow-x:hidden;
+  padding:0 16px calc(96px + env(safe-area-inset-bottom))}
+.wrap{max-width:560px;margin:0 auto}
+header{padding:14px 0 10px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.brand{font-family:'Archivo Black',var(--jp);font-size:26px;line-height:.86;letter-spacing:-.03em;text-transform:uppercase}
+.brand span{display:inline-block;background:var(--blue);color:#fff;padding:2px 6px 1px;margin-top:3px;transform:rotate(-2deg)}
+.geo{position:fixed;z-index:-1;pointer-events:none}
+.geo.c{width:180px;height:180px;border-radius:50%;background:var(--yellow);opacity:.18;right:-60px;top:70px}
+.geo.s{width:120px;height:120px;background:var(--blue);opacity:.07;left:-40px;bottom:120px;transform:rotate(12deg)}
+nav.tabs{display:flex;border:3px solid var(--black);box-shadow:3px 3px 0 var(--black);background:var(--paper)}
+nav.tabs button{font:inherit;font-family:'Archivo Black',var(--jp);font-size:12px;letter-spacing:.06em;
+  border:0;border-left:3px solid var(--black);background:transparent;padding:8px 10px;color:var(--black)}
+nav.tabs button:first-child{border-left:0}
+nav.tabs button.on{background:var(--yellow)}
+.panel{display:none}
+.panel.on{display:block}
+.opts{display:flex;flex-direction:column;gap:8px;margin:6px 0 12px}
+.seg{display:flex;border:3px solid var(--black);background:var(--paper2)}
+.seg button{flex:1;font:inherit;font-weight:700;font-size:13px;border:0;border-left:3px solid var(--black);
+  background:transparent;padding:8px 2px;color:var(--black)}
+.seg button:first-child{border-left:0}
+.seg button.on{background:var(--black);color:#fff}
+.seg.tapsel span{display:flex;align-items:center;padding:0 10px;font-size:12px;font-weight:700;background:var(--yellow);border-right:3px solid var(--black);white-space:nowrap}
+.seg.tapsel button:first-of-type{border-left:0}
+.seg.tapsel button.on{background:var(--blue)}
+.fi{width:1.1em;height:1.1em;vertical-align:-.18em;background:#fbf8f1;border-radius:2px}
+.status{display:flex;align-items:center;gap:12px;font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.08em;
+  margin-bottom:8px;text-transform:uppercase}
+.status b{font-family:'Archivo Black',var(--jp);font-size:20px;letter-spacing:0;font-weight:400}
+.status .tag{margin-left:auto;font-family:var(--jp);font-size:12px;letter-spacing:0;text-transform:none;
+  border:2px solid var(--black);padding:1px 6px;background:var(--paper2)}
+.status .tag.assist{background:var(--yellow)}
+.saverow{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.saverow .btn{flex:0 0 auto;min-height:44px;padding:6px 12px;font-size:13px}
+.saverow span{font-size:12px;color:var(--sub);font-weight:700}
+.board{position:relative;border:3px solid var(--black);box-shadow:5px 5px 0 var(--black);background:var(--paper2);
+  display:flex;justify-content:center;align-items:flex-start;min-height:200px;overflow:hidden}
+.board canvas{display:block}
+#s-canvas{touch-action:none}
+#m-canvas{touch-action:manipulation}
+.busy{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;
+  background:rgba(244,240,232,.92);font-weight:700;text-align:center;padding:16px}
+.busy.on{display:flex}
+.spin{width:34px;height:34px;border:5px solid var(--black);border-right-color:var(--yellow);border-radius:50%;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.tools{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--paper);border-top:3px solid var(--black);
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
+.tools .row{max-width:560px;margin:0 auto;display:flex;gap:7px}
+.tools .btn{padding:8px 2px;font-size:13.5px}
+.tools .btn.blue{flex:1.25}
+.btn{font:inherit;font-weight:700;font-size:14px;white-space:nowrap;letter-spacing:-.02em;border:3px solid var(--black);background:var(--paper2);color:var(--black);
+  box-shadow:3px 3px 0 var(--black);padding:10px 4px;flex:1;min-height:52px;line-height:1.15}
+.btn small{display:block;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;font-weight:500}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--black)}
+.btn.blue{background:var(--blue);color:#fff}
+.btn.mode{flex:1.25}
+.btn.mode.flag{background:var(--yellow)}
+.btn:disabled{opacity:.4}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:9;
+  background:var(--black);color:#fff;padding:9px 14px;font-weight:700;font-size:14px;width:max-content;max-width:92vw;text-align:center;
+  border:3px solid var(--black);box-shadow:3px 3px 0 var(--yellow);display:none}
+.toast.on{display:block}
+.modal{position:fixed;inset:0;z-index:20;background:rgba(26,26,26,.45);display:none;align-items:center;justify-content:center;padding:16px}
+.modal.on{display:flex}
+.card{background:var(--paper);border:3px solid var(--black);box-shadow:6px 6px 0 var(--black);padding:20px;width:100%;max-width:380px}
+.card h3{font-family:'Archivo Black',var(--jp);font-size:34px;line-height:1;text-transform:uppercase;margin-bottom:12px}
+.card h3.win{display:inline-block;background:var(--yellow);padding:4px 10px 2px;transform:rotate(-2deg)}
+.card h3.lose{display:inline-block;background:var(--black);color:#fff;padding:4px 10px 2px}
+.card p{margin:6px 0}
+.card .big{font-family:'Archivo Black',var(--jp);font-size:28px}
+.card .nb{display:inline-block;background:var(--blue);color:#fff;font-size:12px;font-weight:700;padding:2px 6px;margin-left:6px;vertical-align:middle}
+.card .row{display:flex;gap:8px;margin-top:16px}
+h2{font-family:'Archivo Black',var(--jp);font-size:16px;font-weight:400;letter-spacing:.03em;text-transform:uppercase;
+  display:inline-block;background:var(--yellow);padding:3px 10px;margin:18px 0 10px}
+table{width:100%;border-collapse:collapse;border:3px solid var(--black);background:var(--paper2);font-size:13px}
+th,td{border:1px solid var(--black);padding:6px 4px;text-align:center}
+th{background:var(--black);color:#fff;font-weight:700;font-size:12px}
+td:first-child{text-align:left;font-weight:700}
+.help p,.help li{font-size:14px;margin:4px 0}
+.help ul{padding-left:1.2em}
+.mini{display:flex;gap:8px;margin-top:10px}
+.mini .btn{min-height:44px;font-size:13px}
+.note{font-size:12px;color:var(--sub);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="geo c"></div><div class="geo s"></div>
+<div class="wrap">
+  <header>
+    <div class="brand">Endless<br><span>Puzzle</span></div>
+    <nav class="tabs">
+      <button data-tab="sl">SLITHER</button><button data-tab="mn">MINES</button><button data-tab="st">記録</button>
+    </nav>
+  </header>
+
+  <section class="panel" id="p-sl">
+    <div class="opts">
+      <div class="seg" id="sl-level"><button data-v="1">かんたん</button><button data-v="2">ふつう</button><button data-v="3">むずかしい</button></div>
+      <div class="seg" id="sl-size"><button data-v="6">6×6</button><button data-v="8">8×8</button><button data-v="10">10×10</button></div>
+    </div>
+    <div class="status"><span>Time</span><b id="sl-time">0:00</b><span class="tag" id="sl-tag"></span></div>
+    <div class="saverow"><button class="btn" id="sl-save"><small>SAVE</small>セーブ</button><button class="btn" id="sl-load"><small>BACK</small>セーブまで戻る</button><span id="sl-saveinfo">セーブなし</span></div>
+    <div class="board" id="sl-board"><canvas id="s-canvas"></canvas>
+      <div class="busy" id="sl-busy"><div class="spin"></div><div>問題を作っています…<br><small>答えが1つに決まるか確かめています</small></div></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-mn">
+    <div class="opts">
+      <div class="seg" id="mn-level"><button data-v="1">初級 9×9</button><button data-v="2">中級 16×16</button><button data-v="3">上級 16×30</button></div>
+      <div class="seg tapsel" id="mn-tap"><span>タップで</span><button data-v="open">⛏ 掘る</button><button data-v="flag"><svg class="fi" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 3v14M4 17h8" stroke="#1a1a1a" stroke-width="2.2"/><path d="M8 3l9 4-9 4z" fill="#1d4ed8" stroke="#1a1a1a" stroke-width="1"/></svg> 旗を立てる</button></div>
+    </div>
+    <div class="status"><span>Time</span><b id="mn-time">0:00</b><span>Mines</span><b id="mn-left">0</b><span class="tag" id="mn-tag"></span></div>
+    <div class="board" id="mn-board"><canvas id="m-canvas"></canvas>
+      <div class="busy" id="mn-busy"><div class="spin"></div><div>盤面を作っています…<br><small>当てずっぽうなしで解けるか確かめています</small></div></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-st">
+    <h2>Slitherlink</h2>
+    <table id="st-sl"></table>
+    <h2>Minesweeper</h2>
+    <table id="st-mn"></table>
+    <p class="note">ベスト＝ヒントも「一手戻す（地雷を踏んだあと）」も使わずに解いた中で一番速い時間。平均はクリアした全部。</p>
+    <div class="mini">
+      <button class="btn" id="bk-out">記録を書き出す</button>
+      <button class="btn" id="bk-in">記録を戻す</button>
+      <input type="file" id="bk-file" accept="application/json,.json" hidden>
+    </div>
+    <h2>遊び方</h2>
+    <div class="help">
+      <p><b>スリザーリンク</b>：点と点を線でつないで、1つの輪を作ります。数字は、そのマスの4辺のうち線になる辺の数。輪は枝分かれも交差もしません。</p>
+      <ul>
+        <li>辺をタップ＝線（もう一度で消す）。点から点へなぞると続けて引けます</li>
+        <li>盤目は最初から薄く出ています。線を引いて、もう引けなくなった辺（線が2本集まった点から出る辺・数字の数だけ線を引き終えたマスの辺）の盤目は自動で消えます</li>
+        <li>「×」モードでタップ＝線が来ない印（線モードでも、線をもう一度タップすると×）</li>
+        <li><b>セーブ</b>＝今の盤面を覚える。<b>戻る</b>＝最後のセーブまで一気に戻る（もう一度押すと、その前のセーブへ）。セーブより後に引いた線は水色で出ます（仮定を試すときに便利）</li>
+        <li>数字の線が多すぎる・×が多すぎるマスは黄色になります</li>
+      </ul>
+      <p><b>マインスイーパー</b>：地雷のないマスを全部開けばクリア。数字は周りの8マスにある地雷の数。</p>
+      <ul>
+        <li>最初の1手は必ず安全。<b>どの盤面も当てずっぽうなしで最後まで解けます</b></li>
+        <li>「タップで」を<b>掘る</b>にするとタップ＝掘る・長押し＝旗、<b>旗を立てる</b>にするとタップ＝旗・長押し＝掘る（下の左のボタンでも切り替えられます）</li>
+        <li>数字をタップ＝周りの旗の数が合っていれば残りをまとめて開く</li>
+      </ul>
+      <p><b>ヒント</b>：間違っている印があればそれを、無ければ次に確実に決まる1か所を黄色で示します。</p>
+      <p><b>途中保存</b>：閉じても、遊びかけの盤面と時間はこの端末に残ります。</p>
+    </div>
+  </section>
+</div>
+
+<div class="tools" id="tools-sl"><div class="row">
+  <button class="btn mode" id="sl-mode"><small>MODE</small>線</button>
+  <button class="btn" id="sl-undo"><small>UNDO</small>一手戻す</button>
+  <button class="btn" id="sl-hint"><small>HINT</small>ヒント</button>
+  <button class="btn blue" id="sl-new"><small>NEW</small>新しい問題</button>
+</div></div>
+<div class="tools" id="tools-mn"><div class="row">
+  <button class="btn mode" id="mn-mode"><small>TAP</small>⛏ 掘る</button>
+  <button class="btn" id="mn-undo"><small>UNDO</small>一手戻す</button>
+  <button class="btn" id="mn-hint"><small>HINT</small>ヒント</button>
+  <button class="btn blue" id="mn-new"><small>NEW</small>新しい盤面</button>
+</div></div>
+
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal"><div class="card" id="modal-card"></div></div>
+
+<script src="gen.js"></script>
+<script>
+'use strict';
+const KEY = 'endless-puzzle-v1';
+const $ = (id) => document.getElementById(id);
+const LV = { 1: 'かんたん', 2: 'ふつう', 3: 'むずかしい' };
+const MLV = { 1: { W: 9, H: 9, M: 10, name: '初級' }, 2: { W: 16, H: 16, M: 40, name: '中級' }, 3: { W: 16, H: 30, M: 99, name: '上級' } };
+
+/* ---------- 保存 ---------- */
+function defaults() { return { v: 1, tab: 'sl', sl: { level: 2, size: 8, game: null, mode: 1 }, mn: { level: 1, game: null, mode: 'open' }, queue: {}, stats: {} }; }
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)) || defaults(); } catch (e) { S = defaults(); }
+S = Object.assign(defaults(), S);
+let saveTimer = 0;
+function save(now) {
+  clearTimeout(saveTimer);
+  const f = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+  if (now) f(); else saveTimer = setTimeout(f, 300);
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') save(true); });
+window.addEventListener('pagehide', () => save(true));
+
+function stat(k) { return S.stats[k] || (S.stats[k] = { played: 0, cleared: 0, best: null, sum: 0, assisted: 0 }); }
+function fmt(ms) {
+  if (ms == null) return '—';
+  const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, ss = s % 60;
+  return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(ss).padStart(2, '0');
+}
+
+/* ---------- 小物 ---------- */
+let toastTimer = 0;
+function toast(msg, ms) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), ms || 2600);
+}
+function modal(html, binds) {
+  $('modal-card').innerHTML = html; $('modal').classList.add('on');
+  Object.entries(binds || {}).forEach(([id, fn]) => { const b = $(id); if (b) b.onclick = () => { closeModal(); fn && fn(); }; });
+}
+function closeModal() { $('modal').classList.remove('on'); }
+function confirmBox(msg, yes, no) {
+  modal(`<p style="font-weight:700">${msg}</p><div class="row"><button class="btn" id="cf-no">やめる</button><button class="btn blue" id="cf-yes">はい</button></div>`,
+    { 'cf-yes': yes, 'cf-no': no });
+}
+
+/* ---------- 問題づくり（Worker） ---------- */
+let worker = null; const pending = new Map(); let reqId = 0;
+function runLocal(m) {
+  if (m.type === 'slither') return { puzzle: EPGen.genSlither(m.W, m.H, m.level) };
+  return { puzzle: EPGen.genMines(m.W, m.H, m.M, m.first) };
+}
+function getWorker() {
+  if (worker !== null) return worker;
+  try {
+    worker = new Worker('gen.js');
+    worker.onmessage = (ev) => { const p = pending.get(ev.data.id); if (p) { pending.delete(ev.data.id); p.res(ev.data); } };
+    worker.onerror = () => { worker = false; for (const [id, p] of pending) { pending.delete(id); setTimeout(() => p.res(runLocal(p.msg)), 20); } };
+  } catch (e) { worker = false; }
+  return worker;
+}
+function request(msg) {
+  return new Promise((res) => {
+    const id = ++reqId; msg.id = id; const w = getWorker();
+    if (w) { pending.set(id, { res, msg }); w.postMessage(msg); }
+    else setTimeout(() => res(runLocal(msg)), 30);
+  });
+}
+
+/* ---------- タブ ---------- */
+function setTab(t) {
+  S.tab = t; save();
+  document.querySelectorAll('nav.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
+  ['sl', 'mn', 'st'].forEach((k) => $('p-' + k).classList.toggle('on', k === t));
+  $('tools-sl').style.display = t === 'sl' ? '' : 'none';
+  $('tools-mn').style.display = t === 'mn' ? '' : 'none';
+  if (t === 'sl') { slEnsure(); slLayout(); }
+  if (t === 'mn') { mnEnsure(); mnLayout(); }
+  if (t === 'st') renderStats();
+}
+document.querySelectorAll('nav.tabs button').forEach((b) => b.onclick = () => setTab(b.dataset.tab));
+
+/* ---------- 時計 ---------- */
+let lastTick = performance.now();
+setInterval(() => {
+  const now = performance.now(), dt = now - lastTick; lastTick = now;
+  if (document.visibilityState !== 'visible' || $('modal').classList.contains('on')) return;
+  if (S.tab === 'sl') { const g = S.sl.game; if (g && g.started && !g.done) { g.t += dt; $('sl-time').textContent = fmt(g.t); } }
+  if (S.tab === 'mn') { const g = S.mn.game; if (g && g.started && !g.done && g.lost < 0) { g.t += dt; $('mn-time').textContent = fmt(g.t); } }
+}, 250);
+setInterval(() => save(), 5000);
+
+/* =====================================================
+   スリザーリンク
+   ===================================================== */
+const sv = { cv: $('s-canvas'), cs: 30, pad: 14, dpr: 1, hint: null, wrong: null };
+sv.ctx = sv.cv.getContext('2d');
+const slKey = (size, level) => 'S' + size + '-' + level;
+const filling = {};
+let slWaiting = null;
+
+function slFill() {
+  const k = slKey(S.sl.size, S.sl.level);
+  const q = S.queue[k] || (S.queue[k] = []);
+  if (q.length >= 2 || filling[k]) return;
+  filling[k] = true;
+  const size = S.sl.size, level = S.sl.level;
+  request({ type: 'slither', W: size, H: size, level }).then((r) => {
+    filling[k] = false;
+    if (r.puzzle) { (S.queue[k] || (S.queue[k] = [])).push(r.puzzle); save(); }
+    if (slWaiting === k && r.puzzle) { slWaiting = null; slStartFromQueue(); }
+    slFill();
+  });
+}
+function slStartFromQueue() {
+  const k = slKey(S.sl.size, S.sl.level), q = S.queue[k] || [];
+  if (!q.length) { slWaiting = k; $('sl-busy').classList.add('on'); slFill(); return; }
+  const p = q.shift();
+  const G = EPGen.geo(p.W, p.H);
+  S.sl.game = { W: p.W, H: p.H, level: S.sl.level, grade: p.level, clues: p.clues, sol: p.sol, marks: new Array(G.E).fill(0), undo: [], saves: [], t: 0, started: false, assist: false, done: false };
+  sv.hint = null; sv.wrong = null;
+  $('sl-busy').classList.remove('on');
+  save(); slLayout(); slFill();
+}
+function slEnsure() { if (!S.sl.game) slStartFromQueue(); else slFill(); }
+function slNew() {
+  const g = S.sl.game;
+  const go = () => { S.sl.game = null; slStartFromQueue(); };
+  if (g && g.started && !g.done) confirmBox('今の問題をやめて、新しい問題にしますか？', go); else go();
+}
+function slSetting(kind, v) {
+  const g = S.sl.game;
+  const apply = () => { S.sl[kind] = v; slSyncSeg(); S.sl.game = null; slStartFromQueue(); };
+  if (S.sl[kind] === v) return;
+  if (g && g.started && !g.done) confirmBox('今の問題をやめて、' + (kind === 'size' ? v + '×' + v : LV[v]) + 'で始めますか？', apply);
+  else apply();
+}
+function slSyncSeg() {
+  document.querySelectorAll('#sl-level button').forEach((b) => b.classList.toggle('on', +b.dataset.v === S.sl.level));
+  document.querySelectorAll('#sl-size button').forEach((b) => b.classList.toggle('on', +b.dataset.v === S.sl.size));
+  $('sl-mode').innerHTML = '<small>MODE</small>' + (S.sl.mode === 1 ? '線' : '×');
+  $('sl-mode').classList.toggle('flag', S.sl.mode !== 1);
+}
+document.querySelectorAll('#sl-level button').forEach((b) => b.onclick = () => slSetting('level', +b.dataset.v));
+document.querySelectorAll('#sl-size button').forEach((b) => b.onclick = () => slSetting('size', +b.dataset.v));
+
+function slLayout() {
+  const g = S.sl.game; slSyncSeg();
+  if (!g) { sv.ctx.clearRect(0, 0, sv.cv.width, sv.cv.height); return; }
+  const avail = Math.min($('sl-board').clientWidth - 6, 560);
+  const cs = Math.floor(avail / (g.W + 0.8));
+  sv.cs = cs; sv.pad = Math.round((avail - cs * g.W) / 2);
+  const w = cs * g.W + sv.pad * 2, h = cs * g.H + sv.pad * 2;
+  sv.dpr = window.devicePixelRatio || 1;
+  sv.cv.width = Math.round(w * sv.dpr); sv.cv.height = Math.round(h * sv.dpr);
+  sv.cv.style.width = w + 'px'; sv.cv.style.height = h + 'px';
+  slDraw(); slStatus(); slSaveInfo();
+}
+function slStatus() {
+  const g = S.sl.game; if (!g) return;
+  $('sl-time').textContent = fmt(g.t);
+  const tag = $('sl-tag');
+  tag.textContent = LV[g.level] + ' ' + g.W + '×' + g.H + (g.assist ? '・ヒント使用' : '');
+  tag.classList.toggle('assist', g.assist);
+}
+
+function slDraw() {
+  const g = S.sl.game; if (!g) return;
+  const G = EPGen.geo(g.W, g.H), ctx = sv.ctx, cs = sv.cs, pad = sv.pad;
+  ctx.setTransform(sv.dpr, 0, 0, sv.dpr, 0, 0);
+  const w = cs * g.W + pad * 2, h = cs * g.H + pad * 2;
+  ctx.fillStyle = '#fbf8f1'; ctx.fillRect(0, 0, w, h);
+  const X = (x) => pad + x * cs, Y = (y) => pad + y * cs;
+  const ex = (e) => { const a = G.edgeVerts[2 * e], b = G.edgeVerts[2 * e + 1]; return [a % (g.W + 1), (a / (g.W + 1)) | 0, b % (g.W + 1), (b / (g.W + 1)) | 0]; };
+  // 解けたら内側を塗る
+  if (g.done) {
+    ctx.fillStyle = 'rgba(251,191,36,.55)';
+    for (let y = 0; y < g.H; y++) { let ins = false; for (let x = 0; x < g.W; x++) { if (g.sol[G.vE(x, y)] === 1) ins = !ins; if (ins) ctx.fillRect(X(x), Y(y), cs, cs); } }
+  }
+  // 数字の数え
+  const L = new Array(G.C).fill(0), XX = new Array(G.C).fill(0);
+  for (let e = 0; e < G.E; e++) { if (!g.marks[e]) continue; for (const c of G.edgeCells[e]) { if (g.marks[e] > 0) L[c]++; else XX[c]++; } }
+  // 間違いのマス（多すぎ）
+  ctx.fillStyle = '#fbbf24';
+  for (let c = 0; c < G.C; c++) {
+    const k = g.clues[c]; if (k < 0 || g.done) continue;
+    if (L[c] > k || XX[c] > 4 - k) ctx.fillRect(X(c % g.W) + 2, Y((c / g.W) | 0) + 2, cs - 4, cs - 4);
+  }
+  // ヒント
+  if (sv.hint != null) {
+    const [x1, y1, x2, y2] = ex(sv.hint.edge);
+    ctx.strokeStyle = '#fbbf24'; ctx.lineCap = 'round'; ctx.lineWidth = Math.max(10, cs * 0.42);
+    ctx.beginPath(); ctx.moveTo(X(x1), Y(y1)); ctx.lineTo(X(x2), Y(y2)); ctx.stroke();
+    ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+    ctx.strokeRect(Math.min(X(x1), X(x2)) - cs * 0.24, Math.min(Y(y1), Y(y2)) - cs * 0.24, Math.abs(X(x2) - X(x1)) + cs * 0.48, Math.abs(Y(y2) - Y(y1)) + cs * 0.48);
+    ctx.setLineDash([]);
+  }
+  if (sv.wrong) {
+    for (const e of sv.wrong) {
+      const [x1, y1, x2, y2] = ex(e);
+      ctx.strokeStyle = '#fbbf24'; ctx.lineCap = 'round'; ctx.lineWidth = Math.max(10, cs * 0.42);
+      ctx.beginPath(); ctx.moveTo(X(x1), Y(y1)); ctx.lineTo(X(x2), Y(y2)); ctx.stroke();
+    }
+  }
+  // 線と×
+  ctx.lineCap = 'round';
+  // まだ決めていない辺＝薄い盤目。ただし引いた線のせいで引けなくなった辺は自動で消す
+  //  （線が2本集まった点から出る辺／数字の数だけ線を引き終えたマスの辺）
+  const sp = (g.saves && g.saves.length) ? g.saves[g.saves.length - 1].marks : null;
+  if (!g.done) {
+    const vdeg = new Array(G.V).fill(0);
+    for (let e = 0; e < G.E; e++) if (g.marks[e] > 0) { vdeg[G.edgeVerts[2 * e]]++; vdeg[G.edgeVerts[2 * e + 1]]++; }
+    const blocked = (e) => {
+      if (vdeg[G.edgeVerts[2 * e]] >= 2 || vdeg[G.edgeVerts[2 * e + 1]] >= 2) return true;
+      for (const c of G.edgeCells[e]) { const k = g.clues[c]; if (k >= 0 && L[c] >= k) return true; }
+      return false;
+    };
+    ctx.strokeStyle = '#cdc5b4'; ctx.lineWidth = Math.max(1.5, cs * 0.05); ctx.lineCap = 'butt';
+    ctx.beginPath();
+    for (let e = 0; e < G.E; e++) { if (g.marks[e] !== 0 || blocked(e)) continue; const [x1, y1, x2, y2] = ex(e); ctx.moveTo(X(x1), Y(y1)); ctx.lineTo(X(x2), Y(y2)); }
+    ctx.stroke();
+    // ×の印
+    ctx.strokeStyle = '#6b6b6b'; ctx.lineWidth = Math.max(1.5, cs * 0.05); ctx.lineCap = 'round';
+    for (let e = 0; e < G.E; e++) {
+      if (g.marks[e] !== -1) continue;
+      const [x1, y1, x2, y2] = ex(e); const mx = (X(x1) + X(x2)) / 2, my = (Y(y1) + Y(y2)) / 2, r = cs * 0.1;
+      ctx.beginPath(); ctx.moveTo(mx - r, my - r); ctx.lineTo(mx + r, my + r); ctx.moveTo(mx + r, my - r); ctx.lineTo(mx - r, my + r); ctx.stroke();
+    }
+  }
+  ctx.lineCap = 'round';
+  for (let e = 0; e < G.E; e++) {
+    if (g.marks[e] <= 0) continue;
+    const [x1, y1, x2, y2] = ex(e);
+    // セーブポイントより後に引いた線は水色（仮の線）
+    ctx.strokeStyle = g.done ? '#1a1a1a' : (sp && sp[e] !== 1 ? '#7fa7ff' : '#1d4ed8');
+    ctx.lineWidth = Math.max(4, cs * 0.13);
+    ctx.beginPath(); ctx.moveTo(X(x1), Y(y1)); ctx.lineTo(X(x2), Y(y2)); ctx.stroke();
+  }
+  // 点（3本以上集まった点は黄色の丸）
+  const deg = new Array(G.V).fill(0);
+  for (let e = 0; e < G.E; e++) if (g.marks[e] > 0) { deg[G.edgeVerts[2 * e]]++; deg[G.edgeVerts[2 * e + 1]]++; }
+  for (let y = 0; y <= g.H; y++) for (let x = 0; x <= g.W; x++) {
+    const v = y * (g.W + 1) + x;
+    if (deg[v] > 2) { ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(X(x), Y(y), cs * 0.22, 0, 7); ctx.fill(); ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2; ctx.stroke(); }
+    const d = Math.max(3, cs * 0.12);
+    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(X(x) - d / 2, Y(y) - d / 2, d, d);
+  }
+  // 数字
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = Math.round(cs * 0.56) + "px 'Archivo Black', sans-serif";
+  for (let c = 0; c < G.C; c++) {
+    const k = g.clues[c]; if (k < 0) continue;
+    ctx.fillStyle = (!g.done && L[c] === k && (k > 0 || XX[c] === 4)) ? '#a39d92' : '#1a1a1a';
+    ctx.fillText(String(k), X(c % g.W) + cs / 2, Y((c / g.W) | 0) + cs / 2 + cs * 0.03);
+  }
+}
+
+// 入力
+let sd = null;
+function slPos(ev) { const r = sv.cv.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; }
+function slEdgeAt(px, py) {
+  const g = S.sl.game, G = EPGen.geo(g.W, g.H);
+  const gx = (px - sv.pad) / sv.cs, gy = (py - sv.pad) / sv.cs;
+  let best = -1, bd = 0.5;
+  const hy = Math.round(gy), hx = Math.floor(gx);
+  if (hy >= 0 && hy <= g.H && hx >= 0 && hx < g.W) { const d = Math.abs(gy - hy); if (d < bd) { bd = d; best = G.hE(hx, hy); } }
+  const vx = Math.round(gx), vy = Math.floor(gy);
+  if (vx >= 0 && vx <= g.W && vy >= 0 && vy < g.H) { const d = Math.abs(gx - vx); if (d < bd) { bd = d; best = G.vE(vx, vy); } }
+  return best;
+}
+function slVertAt(px, py, strict) {
+  const g = S.sl.game;
+  const gx = (px - sv.pad) / sv.cs, gy = (py - sv.pad) / sv.cs;
+  const x = Math.max(0, Math.min(g.W, Math.round(gx))), y = Math.max(0, Math.min(g.H, Math.round(gy)));
+  if (strict && Math.hypot(gx - x, gy - y) > 0.4) return null;
+  return [x, y];
+}
+function slSet(e, val, ch) {
+  const g = S.sl.game; if (g.marks[e] === val) return;
+  ch.push([e, g.marks[e], val]); g.marks[e] = val;
+}
+function slCommit(ch) {
+  const g = S.sl.game;
+  if (!ch.length) return;
+  g.undo.push(ch); if (g.undo.length > 500) g.undo.shift();
+  sv.hint = null; sv.wrong = null;
+  if (!g.started) { g.started = true; stat(slKey(g.W, g.level)).played++; }
+  slCheck(); save(); slDraw();
+}
+function slCheck() {
+  const g = S.sl.game;
+  for (let e = 0; e < g.marks.length; e++) if ((g.marks[e] > 0) !== (g.sol[e] > 0)) return;
+  g.done = true;
+  const st = stat(slKey(g.W, g.level));
+  st.cleared++; st.sum += g.t;
+  let nb = false;
+  if (g.assist) st.assisted++; else if (st.best == null || g.t < st.best) { st.best = g.t; nb = true; }
+  save(true); slDraw(); slStatus();
+  if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+  setTimeout(() => modal(`<h3 class="win">Clear!</h3>
+    <p class="big">${fmt(g.t)}${nb ? '<span class="nb">NEW BEST</span>' : ''}</p>
+    <p>${LV[g.level]} ${g.W}×${g.H}・クリア ${st.cleared}回・ベスト ${fmt(st.best)}${g.assist ? '<br>（ヒントを使ったのでベストには入りません）' : ''}</p>
+    <div class="row"><button class="btn" id="md-see">盤面を見る</button><button class="btn blue" id="md-next">次の問題</button></div>`,
+    { 'md-next': () => { S.sl.game = null; slStartFromQueue(); }, 'md-see': null }), 350);
+}
+
+sv.cv.addEventListener('pointerdown', (ev) => {
+  const g = S.sl.game; if (!g || g.done) return;
+  ev.preventDefault(); sv.cv.setPointerCapture(ev.pointerId);
+  const [px, py] = slPos(ev);
+  sd = { px, py, cur: slVertAt(px, py), moved: false, mode: null, ch: [] };
+});
+sv.cv.addEventListener('pointermove', (ev) => {
+  if (!sd) return;
+  const g = S.sl.game, G = EPGen.geo(g.W, g.H);
+  const [px, py] = slPos(ev);
+  if (!sd.moved && Math.hypot(px - sd.px, py - sd.py) > sv.cs * 0.35) sd.moved = true;
+  if (!sd.moved) return;
+  const v = slVertAt(px, py, true); if (!v) return;
+  let [cx, cy] = sd.cur; const [tx, ty] = v;
+  let guard = 0;
+  while ((cx !== tx || cy !== ty) && guard++ < 60) {
+    let nx = cx, ny = cy;
+    if (Math.abs(tx - cx) >= Math.abs(ty - cy)) nx += Math.sign(tx - cx); else ny += Math.sign(ty - cy);
+    const e = ny === cy ? G.hE(Math.min(cx, nx), cy) : G.vE(cx, Math.min(cy, ny));
+    if (sd.mode === null) {
+      if (S.sl.mode === 1) sd.mode = g.marks[e] === 1 ? 0 : 1;
+      else sd.mode = g.marks[e] === -1 ? 0 : -1;
+    }
+    slSet(e, sd.mode, sd.ch);
+    cx = nx; cy = ny;
+  }
+  sd.cur = [cx, cy];
+  slDraw();
+});
+function slUp(ev) {
+  if (!sd) return;
+  const g = S.sl.game; const d = sd; sd = null;
+  if (!d.moved) {
+    const e = slEdgeAt(d.px, d.py);
+    if (e >= 0) {
+      const m = g.marks[e];
+      const nv = S.sl.mode === 1 ? (m === 1 ? -1 : m === -1 ? 0 : 1) : (m === -1 ? 0 : -1);
+      slSet(e, nv, d.ch);
+    }
+  }
+  slCommit(d.ch);
+}
+sv.cv.addEventListener('pointerup', slUp);
+sv.cv.addEventListener('pointercancel', slUp);
+
+$('sl-mode').onclick = () => { S.sl.mode = S.sl.mode === 1 ? -1 : 1; slSyncSeg(); save(); };
+function slSaveInfo() {
+  const g = S.sl.game, n = g && g.saves ? g.saves.length : 0;
+  $('sl-saveinfo').textContent = n ? 'セーブ ' + n + 'こ' : 'セーブなし';
+  $('sl-load').disabled = !n;
+}
+const sameMarks = (a, b) => { for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false; return true; };
+$('sl-save').onclick = () => {
+  const g = S.sl.game; if (!g || g.done) return;
+  if (!g.saves) g.saves = [];
+  const last = g.saves[g.saves.length - 1];
+  if (last && sameMarks(last.marks, g.marks)) { toast('この盤面はセーブ済みです'); return; }
+  g.saves.push({ marks: g.marks.slice() }); if (g.saves.length > 9) g.saves.shift();
+  save(); slSaveInfo(); slDraw(); toast('セーブしました（' + g.saves.length + '）', 1500);
+};
+$('sl-load').onclick = () => {
+  const g = S.sl.game; if (!g || g.done || !g.saves || !g.saves.length) return;
+  let k = g.saves.length - 1;
+  // 最後のセーブと同じ盤面なら、そのセーブを外して1つ前へ
+  if (sameMarks(g.saves[k].marks, g.marks)) {
+    if (k === 0) { toast('これより前のセーブはありません'); return; }
+    g.saves.pop(); k--;
+  }
+  const tgt = g.saves[k].marks, ch = [];
+  for (let e = 0; e < g.marks.length; e++) if (g.marks[e] !== tgt[e]) { ch.push([e, g.marks[e], tgt[e]]); g.marks[e] = tgt[e]; }
+  if (ch.length) { g.undo.push(ch); if (g.undo.length > 500) g.undo.shift(); }
+  sv.hint = null; sv.wrong = null;
+  save(); slSaveInfo(); slDraw(); toast('セーブ ' + (k + 1) + ' に戻りました', 1500);
+};
+$('sl-undo').onclick = () => {
+  const g = S.sl.game; if (!g || g.done) return;
+  const ch = g.undo.pop(); if (!ch) { toast('戻せる手がありません'); return; }
+  for (let i = ch.length - 1; i >= 0; i--) g.marks[ch[i][0]] = ch[i][1];
+  sv.hint = null; sv.wrong = null; save(); slDraw();
+};
+$('sl-hint').onclick = () => {
+  const g = S.sl.game; if (!g || g.done) return;
+  const wrong = [];
+  for (let e = 0; e < g.marks.length; e++) { const m = g.marks[e]; if (m && (m > 0) !== (g.sol[e] > 0)) wrong.push(e); }
+  g.assist = true; slStatus();
+  if (wrong.length) { sv.wrong = wrong; sv.hint = null; slDraw(); toast('間違っている印が ' + wrong.length + ' か所あります（黄色）'); save(); return; }
+  const h = EPGen.slitherHint(g.W, g.H, Int8Array.from(g.clues), Int8Array.from(g.marks));
+  if (!h) { toast('ヒントが見つかりませんでした'); return; }
+  sv.hint = h; sv.wrong = null; slDraw();
+  toast(h.val > 0 ? '黄色の辺は「線」になります' : '黄色の辺には線が来ません（×）', 3200);
+  save();
+};
+$('sl-new').onclick = slNew;
+
+/* =====================================================
+   マインスイーパー
+   ===================================================== */
+const mv = { cv: $('m-canvas'), cs: 30, dpr: 1, hint: null, wrongFlags: null };
+mv.ctx = mv.cv.getContext('2d');
+const FLAG_SVG = "<svg class=\"fi\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M7 3v14M4 17h8\" stroke=\"#1a1a1a\" stroke-width=\"2.2\"/><path d=\"M8 3l9 4-9 4z\" fill=\"#1d4ed8\" stroke=\"#1a1a1a\" stroke-width=\"1\"/></svg>";
+const NUMCOL = [null, '#1d4ed8', '#0f766e', '#6d28d9', '#1e3a8a', '#92400e', '#0e7490', '#1a1a1a', '#6b6b6b'];
+
+function mnNewGame() {
+  const L = MLV[S.mn.level];
+  S.mn.game = { W: L.W, H: L.H, M: L.M, level: S.mn.level, mines: null, cells: new Array(L.W * L.H).fill(0), undo: [], t: 0, started: false, assist: false, done: false, lost: -1 };
+  mv.hint = null; mv.wrongFlags = null; mnNum = null;
+  save(); mnLayout();
+}
+function mnEnsure() { if (!S.mn.game) mnNewGame(); }
+let mnNum = null;
+function nums() { const g = S.mn.game; if (!mnNum && g.mines) mnNum = EPGen.numbersOf(g.W, g.H, g.mines); return mnNum; }
+function mnSetting(v) {
+  if (S.mn.level === v) return;
+  const g = S.mn.game;
+  const apply = () => { S.mn.level = v; mnSync(); mnNewGame(); };
+  if (g && g.started && !g.done && g.lost < 0) confirmBox('今の盤面をやめて、' + MLV[v].name + 'で始めますか？', apply); else apply();
+}
+document.querySelectorAll('#mn-level button').forEach((b) => b.onclick = () => mnSetting(+b.dataset.v));
+function mnSync() {
+  document.querySelectorAll('#mn-level button').forEach((b) => b.classList.toggle('on', +b.dataset.v === S.mn.level));
+  const flag = S.mn.mode === 'flag';
+  $('mn-mode').innerHTML = '<small>TAP</small>' + (flag ? FLAG_SVG + ' 旗' : '⛏ 掘る');
+  document.querySelectorAll('#mn-tap button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.mn.mode));
+  $('mn-mode').classList.toggle('flag', flag);
+}
+function mnLayout() {
+  mnSync();
+  const g = S.mn.game; if (!g) return;
+  const avail = Math.min($('mn-board').clientWidth - 6, 560);
+  const cs = Math.max(18, Math.min(44, Math.floor(avail / g.W)));
+  mv.cs = cs;
+  const w = cs * g.W, h = cs * g.H;
+  mv.dpr = window.devicePixelRatio || 1;
+  mv.cv.width = Math.round(w * mv.dpr); mv.cv.height = Math.round(h * mv.dpr);
+  mv.cv.style.width = w + 'px'; mv.cv.style.height = h + 'px';
+  mnDraw(); mnStatus();
+}
+function mnStatus() {
+  const g = S.mn.game; if (!g) return;
+  $('mn-time').textContent = fmt(g.t);
+  let f = 0; for (const c of g.cells) if (c === 2) f++;
+  $('mn-left').textContent = g.M - f;
+  const tag = $('mn-tag');
+  tag.textContent = MLV[g.level].name + (g.assist ? '・補助あり' : '');
+  tag.classList.toggle('assist', g.assist);
+}
+function drawFlag(ctx, x, y, cs) {
+  ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = Math.max(2, cs * 0.08);
+  ctx.beginPath(); ctx.moveTo(x + cs * 0.38, y + cs * 0.2); ctx.lineTo(x + cs * 0.38, y + cs * 0.8); ctx.stroke();
+  ctx.fillStyle = '#1a1a1a'; ctx.fillRect(x + cs * 0.24, y + cs * 0.76, cs * 0.42, cs * 0.08);
+  ctx.fillStyle = '#1d4ed8';
+  ctx.beginPath(); ctx.moveTo(x + cs * 0.4, y + cs * 0.18); ctx.lineTo(x + cs * 0.78, y + cs * 0.36); ctx.lineTo(x + cs * 0.4, y + cs * 0.54); ctx.closePath(); ctx.fill();
+}
+function drawMine(ctx, x, y, cs) {
+  const cx = x + cs / 2, cy = y + cs / 2, r = cs * 0.24;
+  ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = Math.max(1.5, cs * 0.07);
+  for (let i = 0; i < 4; i++) { const a = i * Math.PI / 4; ctx.beginPath(); ctx.moveTo(cx - Math.cos(a) * r * 1.5, cy - Math.sin(a) * r * 1.5); ctx.lineTo(cx + Math.cos(a) * r * 1.5, cy + Math.sin(a) * r * 1.5); ctx.stroke(); }
+  ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx - r * 0.35, cy - r * 0.35, r * 0.25, 0, 7); ctx.fill();
+}
+function mnDraw() {
+  const g = S.mn.game; if (!g) return;
+  const ctx = mv.ctx, cs = mv.cs, n = nums();
+  ctx.setTransform(mv.dpr, 0, 0, mv.dpr, 0, 0);
+  const over = g.lost >= 0 || g.done;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = Math.round(cs * 0.58) + "px 'Archivo Black', sans-serif";
+  for (let c = 0; c < g.cells.length; c++) {
+    const x = (c % g.W) * cs, y = ((c / g.W) | 0) * cs, s = g.cells[c];
+    if (s === 1) {
+      ctx.fillStyle = c === g.lost ? '#fbbf24' : '#fbf8f1'; ctx.fillRect(x, y, cs, cs);
+      if (g.mines && g.mines[c]) drawMine(ctx, x, y, cs);
+      else if (n && n[c] > 0) { ctx.fillStyle = NUMCOL[n[c]]; ctx.fillText(String(n[c]), x + cs / 2, y + cs / 2 + cs * 0.03); }
+    } else {
+      ctx.fillStyle = '#d9cfba'; ctx.fillRect(x, y, cs, cs);
+      ctx.fillStyle = '#e9e1d0'; ctx.fillRect(x + 1, y + 1, cs - 2, Math.max(2, cs * 0.12));
+      if (s === 2) {
+        drawFlag(ctx, x, y, cs);
+        if (over && g.mines && !g.mines[c]) {
+          ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = Math.max(2, cs * 0.09);
+          ctx.beginPath(); ctx.moveTo(x + cs * 0.15, y + cs * 0.15); ctx.lineTo(x + cs * 0.85, y + cs * 0.85); ctx.moveTo(x + cs * 0.85, y + cs * 0.15); ctx.lineTo(x + cs * 0.15, y + cs * 0.85); ctx.stroke();
+        }
+      } else if (g.lost >= 0 && g.mines && g.mines[c]) drawMine(ctx, x, y, cs);
+    }
+  }
+  // マス目
+  ctx.strokeStyle = 'rgba(26,26,26,.55)'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = 0; x <= g.W; x++) { ctx.moveTo(x * cs + 0.5, 0); ctx.lineTo(x * cs + 0.5, g.H * cs); }
+  for (let y = 0; y <= g.H; y++) { ctx.moveTo(0, y * cs + 0.5); ctx.lineTo(g.W * cs, y * cs + 0.5); }
+  ctx.stroke();
+  const ring = (c) => {
+    const x = (c % g.W) * cs, y = ((c / g.W) | 0) * cs;
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = Math.max(4, cs * 0.18); ctx.strokeRect(x + 2, y + 2, cs - 4, cs - 4);
+    ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2; ctx.strokeRect(x - 1, y - 1, cs + 2, cs + 2);
+  };
+  if (mv.hint) ring(mv.hint.cell);
+  if (mv.wrongFlags) mv.wrongFlags.forEach(ring);
+}
+
+function mnCell(ev) {
+  const g = S.mn.game, r = mv.cv.getBoundingClientRect();
+  const x = Math.floor((ev.clientX - r.left) / mv.cs), y = Math.floor((ev.clientY - r.top) / mv.cs);
+  if (x < 0 || y < 0 || x >= g.W || y >= g.H) return -1;
+  return y * g.W + x;
+}
+let mnBusy = false;
+function mnRecord(ch, lostPrev) {
+  const g = S.mn.game;
+  if (!ch.length) return;
+  g.undo.push({ ch, lostPrev }); if (g.undo.length > 500) g.undo.shift();
+  mv.hint = null; mv.wrongFlags = null;
+  if (!g.started) { g.started = true; stat('M' + g.level).played++; }
+}
+function mnOpen(c, ch) {
+  const g = S.mn.game, n = nums(), W = g.W, H = g.H, nb = EPGen.nbTable(W, H);
+  if (g.cells[c] !== 0) return false;
+  if (g.mines[c]) { ch.push([c, 0]); g.cells[c] = 1; g.lost = c; return true; }
+  const q = [c]; ch.push([c, 0]); g.cells[c] = 1;
+  while (q.length) {
+    const x = q.pop(); if (n[x] !== 0) continue;
+    for (const y of nb[x]) if (g.cells[y] === 0) { ch.push([y, 0]); g.cells[y] = 1; q.push(y); }
+  }
+  return false;
+}
+async function mnTap(c, alt) {
+  const g = S.mn.game; if (!g || g.done || g.lost >= 0 || mnBusy || c < 0) return;
+  const flagMode = (S.mn.mode === 'flag') !== !!alt;
+  const s = g.cells[c];
+  if (flagMode && s !== 1) {
+    const ch = [[c, s]]; g.cells[c] = s === 2 ? 0 : 2;
+    mnRecord(ch, -1); if (navigator.vibrate) navigator.vibrate(12);
+    save(); mnDraw(); mnStatus(); return;
+  }
+  if (s === 2) return;
+  if (!g.mines) {
+    mnBusy = true;
+    const slow = setTimeout(() => $('mn-busy').classList.add('on'), 150);
+    const r = await request({ type: 'mine', W: g.W, H: g.H, M: g.M, first: c });
+    clearTimeout(slow); $('mn-busy').classList.remove('on'); mnBusy = false;
+    if (S.mn.game !== g || !r.puzzle) return;
+    g.mines = r.puzzle.mines; mnNum = null;
+  }
+  const n = nums(), ch = [];
+  if (s === 1) {
+    if (n[c] === 0) return;
+    const nb = EPGen.nbTable(g.W, g.H)[c];
+    let f = 0; for (const y of nb) if (g.cells[y] === 2) f++;
+    if (f !== n[c]) return;
+    for (const y of nb) { if (g.cells[y] === 0) { mnOpen(y, ch); if (g.lost >= 0) break; } }
+  } else mnOpen(c, ch);
+  mnRecord(ch, -1);
+  mnAfter();
+}
+function mnAfter() {
+  const g = S.mn.game;
+  if (g.lost >= 0) {
+    stat('M' + g.level);
+    save(true); mnDraw(); mnStatus();
+    if (navigator.vibrate) navigator.vibrate(120);
+    setTimeout(() => modal(`<h3 class="lose">Boom</h3>
+      <p>地雷を開きました。この盤面は当てずっぽうなしで解けます。</p>
+      <p class="note">一手戻すと続けられます（ベストには入りません）</p>
+      <div class="row"><button class="btn" id="md-undo">一手戻す</button><button class="btn blue" id="md-new">新しい盤面</button></div>`,
+      { 'md-undo': mnUndo, 'md-new': mnNewGame }), 250);
+    return;
+  }
+  let open = 0; for (const s of g.cells) if (s === 1) open++;
+  if (open === g.W * g.H - g.M) {
+    for (let c = 0; c < g.cells.length; c++) if (g.mines[c]) g.cells[c] = 2;
+    g.done = true;
+    const st = stat('M' + g.level);
+    st.cleared++; st.sum += g.t; let nb = false;
+    if (g.assist) st.assisted++; else if (st.best == null || g.t < st.best) { st.best = g.t; nb = true; }
+    save(true); mnDraw(); mnStatus();
+    if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+    setTimeout(() => modal(`<h3 class="win">Clear!</h3>
+      <p class="big">${fmt(g.t)}${nb ? '<span class="nb">NEW BEST</span>' : ''}</p>
+      <p>${MLV[g.level].name}・クリア ${st.cleared}回・ベスト ${fmt(st.best)}${g.assist ? '<br>（補助を使ったのでベストには入りません）' : ''}</p>
+      <div class="row"><button class="btn" id="md-see">盤面を見る</button><button class="btn blue" id="md-next">次の盤面</button></div>`,
+      { 'md-next': mnNewGame, 'md-see': null }), 350);
+    return;
+  }
+  save(); mnDraw(); mnStatus();
+}
+function mnUndo() {
+  const g = S.mn.game; if (!g || g.done) return;
+  const u = g.undo.pop(); if (!u) { toast('戻せる手がありません'); return; }
+  for (let i = u.ch.length - 1; i >= 0; i--) g.cells[u.ch[i][0]] = u.ch[i][1];
+  if (g.lost >= 0) { g.lost = -1; g.assist = true; }
+  mv.hint = null; mv.wrongFlags = null;
+  save(); mnDraw(); mnStatus();
+}
+// 長押し＝反対の操作
+let md = null;
+mv.cv.addEventListener('contextmenu', (ev) => ev.preventDefault());
+mv.cv.addEventListener('pointerdown', (ev) => {
+  if (ev.button === 2) { mnTap(mnCell(ev), true); return; }
+  const c = mnCell(ev);
+  md = { c, x: ev.clientX, y: ev.clientY, fired: false };
+  md.timer = setTimeout(() => { if (md) { md.fired = true; mnTap(md.c, true); } }, 380);
+});
+mv.cv.addEventListener('pointermove', (ev) => {
+  if (md && Math.hypot(ev.clientX - md.x, ev.clientY - md.y) > 10) { clearTimeout(md.timer); md = null; }
+});
+mv.cv.addEventListener('pointerup', () => {
+  if (!md) return; clearTimeout(md.timer);
+  if (!md.fired) mnTap(md.c, false);
+  md = null;
+});
+mv.cv.addEventListener('pointercancel', () => { if (md) clearTimeout(md.timer); md = null; });
+
+$('mn-mode').onclick = () => { S.mn.mode = S.mn.mode === 'flag' ? 'open' : 'flag'; mnSync(); save(); toast(S.mn.mode === 'flag' ? 'タップで旗を立てます（長押しで掘る）' : 'タップで掘ります（長押しで旗）', 1800); };
+document.querySelectorAll('#mn-tap button').forEach((b) => b.onclick = () => { S.mn.mode = b.dataset.v; mnSync(); save(); });
+$('mn-undo').onclick = mnUndo;
+$('mn-new').onclick = () => {
+  const g = S.mn.game;
+  if (g && g.started && !g.done && g.lost < 0) confirmBox('今の盤面をやめて、新しい盤面にしますか？', mnNewGame); else mnNewGame();
+};
+$('mn-hint').onclick = () => {
+  const g = S.mn.game; if (!g || g.done || g.lost >= 0) return;
+  if (!g.mines) { toast('最初の1手はどこを開いても安全です'); return; }
+  const wrong = []; for (let c = 0; c < g.cells.length; c++) if (g.cells[c] === 2 && !g.mines[c]) wrong.push(c);
+  g.assist = true; mnStatus();
+  if (wrong.length) { mv.wrongFlags = wrong; mv.hint = null; mnDraw(); toast('旗の位置が違うマスが ' + wrong.length + ' か所あります（黄色）'); save(); return; }
+  const st = Int8Array.from(g.cells.map((s) => s === 1 ? 1 : s === 2 ? 2 : 0));
+  const d = EPGen.mineDeduce(g.W, g.H, st, nums(), g.M);
+  let pick = null;
+  if (d.safe.length) pick = { cell: d.safe[Math.floor(Math.random() * d.safe.length)], safe: true };
+  else if (d.mine.length) pick = { cell: d.mine[Math.floor(Math.random() * d.mine.length)], safe: false };
+  if (!pick) { toast('ヒントが見つかりませんでした'); return; }
+  mv.hint = pick; mv.wrongFlags = null; mnDraw();
+  toast(pick.safe ? '黄色のマスは安全です（開けます）' : '黄色のマスは地雷です（旗を立てられます）', 3200);
+  save();
+};
+
+/* =====================================================
+   記録
+   ===================================================== */
+function renderStats() {
+  const row = (name, k) => { const s = S.stats[k] || { played: 0, cleared: 0, best: null, sum: 0 }; return `<tr><td>${name}</td><td>${s.played}</td><td>${s.cleared}</td><td>${fmt(s.best)}</td><td>${s.cleared ? fmt(s.sum / s.cleared) : '—'}</td></tr>`; };
+  const head = '<tr><th></th><th>遊んだ</th><th>クリア</th><th>ベスト</th><th>平均</th></tr>';
+  let h = head;
+  for (const lv of [1, 2, 3]) for (const sz of [6, 8, 10]) h += row(LV[lv] + ' ' + sz + '×' + sz, slKey(sz, lv));
+  $('st-sl').innerHTML = h;
+  h = head; for (const lv of [1, 2, 3]) h += row(MLV[lv].name, 'M' + lv);
+  $('st-mn').innerHTML = h;
+}
+$('bk-out').onclick = () => {
+  const stamp = new Date(Date.now() + 9 * 3600e3).toISOString().replace(/[-:]/g, '').replace('T', '_').slice(0, 13);
+  const blob = new Blob([JSON.stringify({ app: 'endless-puzzle', v: 1, stats: S.stats }, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'endless-puzzle_記録_' + stamp + '.json';
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+};
+$('bk-in').onclick = () => $('bk-file').click();
+$('bk-file').onchange = async (ev) => {
+  const f = ev.target.files[0]; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (d.app !== 'endless-puzzle' || typeof d.stats !== 'object') throw 0;
+    confirmBox('この端末の記録を、読み込んだ記録に置き換えますか？', () => { S.stats = d.stats; save(true); renderStats(); toast('記録を戻しました'); });
+  } catch (e) { toast('このファイルは読めませんでした'); }
+  ev.target.value = '';
+};
+
+/* ---------- 起動 ---------- */
+window.addEventListener('resize', () => { if (S.tab === 'sl') slLayout(); if (S.tab === 'mn') mnLayout(); });
+setTab(S.tab || 'sl');
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { slDraw(); mnDraw(); });
+// もう一方の遊びの問題も、裏で先に作っておく
+setTimeout(() => { slFill(); }, 800);
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => {});
+</script>
+</body>
+</html>

@@ -58,7 +58,7 @@ nav.tabs button.on{background:var(--yellow)}
 .board{position:relative;border:3px solid var(--black);box-shadow:5px 5px 0 var(--black);background:var(--paper2);
   display:flex;justify-content:center;align-items:flex-start;min-height:200px;overflow:hidden}
 .board canvas{display:block}
-#s-canvas{touch-action:none}
+#s-canvas{touch-action:manipulation}
 #m-canvas{touch-action:manipulation}
 .busy{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;
   background:rgba(244,240,232,.92);font-weight:700;text-align:center;padding:16px}
@@ -153,7 +153,7 @@ td:first-child{text-align:left;font-weight:700}
     <div class="help">
       <p><b>スリザーリンク</b>：点と点を線でつないで、1つの輪を作ります。数字は、そのマスの4辺のうち線になる辺の数。輪は枝分かれも交差もしません。</p>
       <ul>
-        <li>辺をタップ＝線（もう一度で消す）。点から点へなぞると続けて引けます</li>
+        <li>辺をタップ＝線（もう一度で×、もう一度で消す）。指2本で拡大・指でずらしても線は引かれません</li>
         <li>盤目は最初から薄く出ています。線を引いて、もう引けなくなった辺（線が2本集まった点から出る辺・数字の数だけ線を引き終えたマスの辺）の盤目は自動で消えます</li>
         <li>「×」モードでタップ＝線が来ない印（線モードでも、線をもう一度タップすると×）</li>
         <li><b>セーブ</b>＝今の盤面を覚える。<b>戻る</b>＝最後のセーブまで一気に戻る（もう一度押すと、その前のセーブへ）。セーブより後に引いた線は水色で出ます（仮定を試すときに便利）</li>
@@ -492,50 +492,28 @@ function slCheck() {
     { 'md-next': () => { S.sl.game = null; slStartFromQueue(); }, 'md-see': null }), 350);
 }
 
+// タップだけで線を引く（なぞり書きはしない：拡大・移動の指の動きで線が引かれないように）
+const slTouches = new Set();
 sv.cv.addEventListener('pointerdown', (ev) => {
+  slTouches.add(ev.pointerId);
   const g = S.sl.game; if (!g || g.done) return;
-  ev.preventDefault(); sv.cv.setPointerCapture(ev.pointerId);
-  const [px, py] = slPos(ev);
-  sd = { px, py, cur: slVertAt(px, py), moved: false, mode: null, ch: [] };
+  if (slTouches.size > 1) { sd = null; return; } // 2本指＝拡大・移動
+  sd = { x: ev.clientX, y: ev.clientY, pos: slPos(ev), t: Date.now() };
 });
 sv.cv.addEventListener('pointermove', (ev) => {
-  if (!sd) return;
-  const g = S.sl.game, G = EPGen.geo(g.W, g.H);
-  const [px, py] = slPos(ev);
-  if (!sd.moved && Math.hypot(px - sd.px, py - sd.py) > sv.cs * 0.35) sd.moved = true;
-  if (!sd.moved) return;
-  const v = slVertAt(px, py, true); if (!v) return;
-  let [cx, cy] = sd.cur; const [tx, ty] = v;
-  let guard = 0;
-  while ((cx !== tx || cy !== ty) && guard++ < 60) {
-    let nx = cx, ny = cy;
-    if (Math.abs(tx - cx) >= Math.abs(ty - cy)) nx += Math.sign(tx - cx); else ny += Math.sign(ty - cy);
-    const e = ny === cy ? G.hE(Math.min(cx, nx), cy) : G.vE(cx, Math.min(cy, ny));
-    if (sd.mode === null) {
-      if (S.sl.mode === 1) sd.mode = g.marks[e] === 1 ? 0 : 1;
-      else sd.mode = g.marks[e] === -1 ? 0 : -1;
-    }
-    slSet(e, sd.mode, sd.ch);
-    cx = nx; cy = ny;
-  }
-  sd.cur = [cx, cy];
-  slDraw();
+  if (sd && Math.hypot(ev.clientX - sd.x, ev.clientY - sd.y) > 10) sd = null; // 指が動いた＝移動
 });
-function slUp(ev) {
-  if (!sd) return;
-  const g = S.sl.game; const d = sd; sd = null;
-  if (!d.moved) {
-    const e = slEdgeAt(d.px, d.py);
-    if (e >= 0) {
-      const m = g.marks[e];
-      const nv = S.sl.mode === 1 ? (m === 1 ? -1 : m === -1 ? 0 : 1) : (m === -1 ? 0 : -1);
-      slSet(e, nv, d.ch);
-    }
-  }
-  slCommit(d.ch);
-}
-sv.cv.addEventListener('pointerup', slUp);
-sv.cv.addEventListener('pointercancel', slUp);
+function slEnd(ev) { slTouches.delete(ev.pointerId); }
+sv.cv.addEventListener('pointerup', (ev) => {
+  const d = sd; sd = null; const multi = slTouches.size > 1; slEnd(ev);
+  if (!d || multi || Date.now() - d.t > 600) return;
+  const g = S.sl.game; if (!g || g.done) return;
+  const e = slEdgeAt(d.pos[0], d.pos[1]); if (e < 0) return;
+  const m = g.marks[e], ch = [];
+  const nv = S.sl.mode === 1 ? (m === 1 ? -1 : m === -1 ? 0 : 1) : (m === -1 ? 0 : -1);
+  slSet(e, nv, ch); slCommit(ch);
+});
+sv.cv.addEventListener('pointercancel', (ev) => { sd = null; slEnd(ev); });
 
 $('sl-mode').onclick = () => { S.sl.mode = S.sl.mode === 1 ? -1 : 1; slSyncSeg(); save(); };
 function slSaveInfo() {
@@ -788,7 +766,10 @@ function mnUndo() {
 // 長押し＝反対の操作
 let md = null;
 mv.cv.addEventListener('contextmenu', (ev) => ev.preventDefault());
+const mnTouches = new Set();
 mv.cv.addEventListener('pointerdown', (ev) => {
+  mnTouches.add(ev.pointerId);
+  if (mnTouches.size > 1) { if (md) clearTimeout(md.timer); md = null; return; }
   if (ev.button === 2) { mnTap(mnCell(ev), true); return; }
   const c = mnCell(ev);
   md = { c, x: ev.clientX, y: ev.clientY, fired: false };
@@ -797,12 +778,13 @@ mv.cv.addEventListener('pointerdown', (ev) => {
 mv.cv.addEventListener('pointermove', (ev) => {
   if (md && Math.hypot(ev.clientX - md.x, ev.clientY - md.y) > 10) { clearTimeout(md.timer); md = null; }
 });
-mv.cv.addEventListener('pointerup', () => {
+mv.cv.addEventListener('pointerup', (ev) => {
+  mnTouches.delete(ev.pointerId);
   if (!md) return; clearTimeout(md.timer);
   if (!md.fired) mnTap(md.c, false);
   md = null;
 });
-mv.cv.addEventListener('pointercancel', () => { if (md) clearTimeout(md.timer); md = null; });
+mv.cv.addEventListener('pointercancel', (ev) => { mnTouches.delete(ev.pointerId); if (md) clearTimeout(md.timer); md = null; });
 
 $('mn-mode').onclick = () => { S.mn.mode = S.mn.mode === 'flag' ? 'open' : 'flag'; mnSync(); save(); toast(S.mn.mode === 'flag' ? 'タップで旗を立てます（長押しで掘る）' : 'タップで掘ります（長押しで旗）', 1800); };
 document.querySelectorAll('#mn-tap button').forEach((b) => b.onclick = () => { S.mn.mode = b.dataset.v; mnSync(); save(); });

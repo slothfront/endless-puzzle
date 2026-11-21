@@ -198,7 +198,7 @@ td:first-child{text-align:left;font-weight:700}
         <li>辺をタップ＝線（もう一度で×、もう一度で消す）。指2本で拡大・指でずらしても線は引かれません</li>
         <li>盤目は最初から薄く出ています。線を引いて、もう引けなくなった辺（線が2本集まった点から出る辺・数字の数だけ線を引き終えたマスの辺・どこにもつながらない行き止まりの辺）の盤目は自動で消えます。線を引くと輪が閉じてしまう辺には×が出て、線は引けません（答えが完成する最後の1本は引けます）</li>
         <li>「×」モードでタップ＝線が来ない印（線モードでも、線をもう一度タップすると×）</li>
-        <li><b>セーブ</b>＝今の盤面を覚える。<b>戻る</b>＝最後のセーブまで一気に戻る（もう一度押すと、その前のセーブへ）。セーブより後に引いた線は水色で出ます（仮定を試すときに便利）</li>
+        <li><b>セーブ</b>＝今の盤面を覚える。セーブした時に最後に触った所に<b>黄色の番号札</b>（1・2…）が付きます。<b>戻る</b>＝最後のセーブまで一気に戻る（もう一度押すと、その前のセーブへ）。セーブより後に引いた線は水色で出ます（仮定を試すときに便利）</li>
         <li>数字の線が多すぎる・×が多すぎるマスは黄色になります</li>
       </ul>
       <p><b>マインスイーパー</b>：地雷のないマスを全部開けばクリア。数字は周りの8マスにある地雷の数。</p>
@@ -516,6 +516,12 @@ function slDraw() {
     ctx.fillStyle = (!g.done && L[c] === k && (k > 0 || XX[c] === 4)) ? '#a39d92' : '#1a1a1a';
     ctx.fillText(String(k), X(c % g.W) + cs / 2, Y((c / g.W) | 0) + cs / 2 + cs * 0.03);
   }
+  // セーブした場所に番号札
+  if (!g.done && g.saves) g.saves.forEach((sp2, i) => {
+    if (sp2.at == null || sp2.at < 0) return;
+    const [x1, y1, x2, y2] = ex(sp2.at);
+    drawSaveBadge(ctx, (X(x1) + X(x2)) / 2, (Y(y1) + Y(y2)) / 2, i + 1, cs);
+  });
 }
 
 // 入力
@@ -624,13 +630,24 @@ function slSaveInfo() {
   $('sl-load').disabled = !n;
 }
 const sameMarks = (a, b) => { for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false; return true; };
+// セーブしたときに最後に触った線（マス）
+const lastAt = (g) => { const u = g.undo[g.undo.length - 1]; return u && u.length ? u[u.length - 1][0] : -1; };
+// セーブした場所の札（黄色の四角に番号）
+function drawSaveBadge(ctx, x, y, n, cs) {
+  const r = Math.max(8, cs * 0.17);
+  ctx.fillStyle = '#fbbf24'; ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2;
+  ctx.fillRect(x - r, y - r, 2 * r, 2 * r); ctx.strokeRect(x - r, y - r, 2 * r, 2 * r);
+  ctx.fillStyle = '#1a1a1a'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = Math.round(r * 1.3) + "px 'Archivo Black', sans-serif";
+  ctx.fillText(String(n), x, y + r * 0.08);
+}
 $('sl-save').onclick = () => {
   const g = S.sl.game; if (!g || g.done) return;
   if (!g.saves) g.saves = [];
   const last = g.saves[g.saves.length - 1];
   if (last && sameMarks(last.marks, g.marks)) { toast('この盤面はセーブ済みです'); return; }
-  g.saves.push({ marks: g.marks.slice() }); if (g.saves.length > 9) g.saves.shift();
-  save(); slSaveInfo(); slDraw(); toast('セーブしました（' + g.saves.length + '）', 1500);
+  g.saves.push({ marks: g.marks.slice(), at: lastAt(g) }); if (g.saves.length > 9) g.saves.shift();
+  save(); slSaveInfo(); slDraw(); toast('セーブしました（黄色の札 ' + g.saves.length + '）', 1600);
 };
 $('sl-load').onclick = () => {
   const g = S.sl.game; if (!g || g.done || !g.saves || !g.saves.length) return;
@@ -860,6 +877,12 @@ function myDraw() {
     ctx.lineWidth = Math.max(4, cs * 0.13);
     ctx.beginPath(); ctx.moveTo(X(x1), Y(y1)); ctx.lineTo(X(x2), Y(y2)); ctx.stroke();
   }
+  // セーブした場所に番号札
+  if (!g.done && g.saves) g.saves.forEach((sp2, i) => {
+    if (sp2.at == null || sp2.at < 0) return;
+    const [x1, y1, x2, y2] = ex(sp2.at);
+    drawSaveBadge(ctx, (X(x1) + X(x2)) / 2, (Y(y1) + Y(y2)) / 2, i + 1, cs);
+  });
 }
 
 // 入力
@@ -972,8 +995,8 @@ $('my-save').onclick = () => {
   if (!g.saves) g.saves = [];
   const last = g.saves[g.saves.length - 1];
   if (last && sameMarks(last.marks, g.marks)) { toast('この盤面はセーブ済みです'); return; }
-  g.saves.push({ marks: g.marks.slice() }); if (g.saves.length > 9) g.saves.shift();
-  save(); mySaveInfo(); myDraw(); toast('セーブしました（' + g.saves.length + '）', 1500);
+  g.saves.push({ marks: g.marks.slice(), at: lastAt(g) }); if (g.saves.length > 9) g.saves.shift();
+  save(); mySaveInfo(); myDraw(); toast('セーブしました（黄色の札 ' + g.saves.length + '）', 1600);
 };
 $('my-load').onclick = () => {
   const g = S.my.game; if (!g || g.done || !g.saves || !g.saves.length) return;
@@ -1141,6 +1164,12 @@ function nrDraw() {
   };
   if (rv.hint) ring(rv.hint.cell);
   if (rv.wrong) rv.wrong.forEach(ring);
+  // セーブした場所に番号札（マスの左上）
+  if (!g.done && g.saves) g.saves.forEach((sp2, i) => {
+    if (sp2.at == null || sp2.at < 0) return;
+    const r = Math.max(9, cs * 0.2);
+    drawSaveBadge(ctx, (sp2.at % g.W) * cs + r + 2, ((sp2.at / g.W) | 0) * cs + r + 2, i + 1, cs);
+  });
 }
 
 // 入力（タップだけ。指2本・動いた指・長押しでは塗らない）
@@ -1199,8 +1228,8 @@ $('nr-save').onclick = () => {
   if (!g.saves) g.saves = [];
   const last = g.saves[g.saves.length - 1];
   if (last && sameMarks(last.marks, g.marks)) { toast('この盤面はセーブ済みです'); return; }
-  g.saves.push({ marks: g.marks.slice() }); if (g.saves.length > 9) g.saves.shift();
-  save(); nrSaveInfo(); nrDraw(); toast('セーブしました（' + g.saves.length + '）', 1500);
+  g.saves.push({ marks: g.marks.slice(), at: lastAt(g) }); if (g.saves.length > 9) g.saves.shift();
+  save(); nrSaveInfo(); nrDraw(); toast('セーブしました（黄色の札 ' + g.saves.length + '）', 1600);
 };
 $('nr-load').onclick = () => {
   const g = S.nr.game; if (!g || g.done || !g.saves || !g.saves.length) return;

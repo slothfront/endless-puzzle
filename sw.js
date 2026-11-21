@@ -3,7 +3,7 @@
 // - 同じサイトのファイル：ネットがあれば最新を取りに行き、無い・遅いときは控えを出す
 // - 字（Google Fonts）：一度読めたものは控えておく
 // 記録（localStorage）には触らない。
-const CACHE = 'endless-puzzle-v3';
+const CACHE = 'endless-puzzle-v4';
 const PRECACHE = ['./', './gen.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon-32.png', './icon-maskable-512.png'];
 const WAIT_MS = 3000;
 

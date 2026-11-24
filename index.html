@@ -200,7 +200,7 @@ td:first-child{text-align:left;font-weight:700}
         <li>辺をタップ＝線（もう一度で×、もう一度で消す）。指2本で拡大・指でずらしても線は引かれません</li>
         <li>盤目は最初から薄く出ています。線を引いて、もう引けなくなった辺（線が2本集まった点から出る辺・数字の数だけ線を引き終えたマスの辺・どこにもつながらない行き止まりの辺）の盤目は自動で消えます。線を引くと輪が閉じてしまう辺には×が出て、線は引けません（答えが完成する最後の1本は引けます）</li>
         <li>「×」モードでタップ＝線が来ない印（線モードでも、線をもう一度タップすると×）</li>
-        <li><b>セーブ</b>＝今の盤面を覚える。セーブした時に最後に触った所に<b>黄色の番号札</b>（1・2…）が付きます。<b>戻る</b>＝最後のセーブまで一気に戻る（もう一度押すと、その前のセーブへ）。セーブより後に引いた線は水色で出ます（仮定を試すときに便利）</li>
+        <li><b>セーブ</b>＝今の盤面を覚える。セーブした時に最後に触った所に<b>黄色の番号札</b>（1・2…）が付きます。<b>戻る</b>＝最後のセーブまで一気に戻る（もう一度押すと、その前のセーブへ）。戻ったあとの「一手戻す」は、セーブより前の手を1つずつ戻します（「戻る」自体は取り消せません）。セーブより後に引いた線は水色で出ます（仮定を試すときに便利）</li>
         <li>数字の線が多すぎる・×が多すぎるマスは黄色になります</li>
       </ul>
       <p><b>マインスイーパー</b>：地雷のないマスを全部開けばクリア。数字は周りの8マスにある地雷の数。</p>
@@ -648,7 +648,7 @@ $('sl-save').onclick = () => {
   if (!g.saves) g.saves = [];
   const last = g.saves[g.saves.length - 1];
   if (last && sameMarks(last.marks, g.marks)) { toast('この盤面はセーブ済みです'); return; }
-  g.saves.push({ marks: g.marks.slice(), at: lastAt(g) }); if (g.saves.length > 9) g.saves.shift();
+  g.saves.push({ marks: g.marks.slice(), at: lastAt(g), undo: g.undo.slice() }); if (g.saves.length > 9) g.saves.shift();
   save(); slSaveInfo(); slDraw(); toast('セーブしました（黄色の札 ' + g.saves.length + '）', 1600);
 };
 $('sl-load').onclick = () => {
@@ -661,7 +661,8 @@ $('sl-load').onclick = () => {
   }
   const tgt = g.saves[k].marks, ch = [];
   for (let e = 0; e < g.marks.length; e++) if (g.marks[e] !== tgt[e]) { ch.push([e, g.marks[e], tgt[e]]); g.marks[e] = tgt[e]; }
-  if (ch.length) { g.undo.push(ch); if (g.undo.length > 500) g.undo.shift(); }
+  // 「戻る」は取り消せない。一手戻すは、そのセーブより前の手を1つずつ戻す（セーブしたときの手の記録に戻す）
+  g.undo = g.saves[k].undo ? g.saves[k].undo.slice() : [];
   sv.hint = null; sv.wrong = null;
   save(); slSaveInfo(); slDraw(); toast('セーブ ' + (k + 1) + ' に戻りました', 1500);
 };
@@ -1011,7 +1012,7 @@ $('my-save').onclick = () => {
   if (!g.saves) g.saves = [];
   const last = g.saves[g.saves.length - 1];
   if (last && sameMarks(last.marks, g.marks)) { toast('この盤面はセーブ済みです'); return; }
-  g.saves.push({ marks: g.marks.slice(), at: lastAt(g) }); if (g.saves.length > 9) g.saves.shift();
+  g.saves.push({ marks: g.marks.slice(), at: lastAt(g), undo: g.undo.slice() }); if (g.saves.length > 9) g.saves.shift();
   save(); mySaveInfo(); myDraw(); toast('セーブしました（黄色の札 ' + g.saves.length + '）', 1600);
 };
 $('my-load').onclick = () => {
@@ -1024,7 +1025,8 @@ $('my-load').onclick = () => {
   }
   const tgt = g.saves[k].marks, ch = [];
   for (let e = 0; e < g.marks.length; e++) if (g.marks[e] !== tgt[e]) { ch.push([e, g.marks[e], tgt[e]]); g.marks[e] = tgt[e]; }
-  if (ch.length) { g.undo.push(ch); if (g.undo.length > 500) g.undo.shift(); }
+  // 「戻る」は取り消せない。一手戻すは、そのセーブより前の手を1つずつ戻す（セーブしたときの手の記録に戻す）
+  g.undo = g.saves[k].undo ? g.saves[k].undo.slice() : [];
   yv.hint = null; yv.wrong = null;
   save(); mySaveInfo(); myDraw(); toast('セーブ ' + (k + 1) + ' に戻りました', 1500);
 };
@@ -1245,7 +1247,7 @@ $('nr-save').onclick = () => {
   if (!g.saves) g.saves = [];
   const last = g.saves[g.saves.length - 1];
   if (last && sameMarks(last.marks, g.marks)) { toast('この盤面はセーブ済みです'); return; }
-  g.saves.push({ marks: g.marks.slice(), at: lastAt(g) }); if (g.saves.length > 9) g.saves.shift();
+  g.saves.push({ marks: g.marks.slice(), at: lastAt(g), undo: g.undo.slice() }); if (g.saves.length > 9) g.saves.shift();
   save(); nrSaveInfo(); nrDraw(); toast('セーブしました（黄色の札 ' + g.saves.length + '）', 1600);
 };
 $('nr-load').onclick = () => {
@@ -1257,7 +1259,8 @@ $('nr-load').onclick = () => {
   }
   const tgt = g.saves[k].marks, ch = [];
   for (let c = 0; c < g.marks.length; c++) if (g.marks[c] !== tgt[c]) { ch.push([c, g.marks[c], tgt[c]]); g.marks[c] = tgt[c]; }
-  if (ch.length) { g.undo.push(ch); if (g.undo.length > 500) g.undo.shift(); }
+  // 「戻る」は取り消せない。一手戻すは、そのセーブより前の手を1つずつ戻す（セーブしたときの手の記録に戻す）
+  g.undo = g.saves[k].undo ? g.saves[k].undo.slice() : [];
   rv.hint = null; rv.wrong = null;
   save(); nrSaveInfo(); nrDraw(); toast('セーブ ' + (k + 1) + ' に戻りました', 1500);
 };

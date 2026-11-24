@@ -55,7 +55,8 @@ nav.tabs button.on{background:var(--yellow)}
   border:2px solid var(--black);padding:1px 6px;background:var(--paper2)}
 .status .tag.assist{background:var(--yellow)}
 .saverow{display:flex;gap:8px;align-items:center;margin-bottom:10px}
-.saverow .btn{flex:0 0 auto;min-height:44px;padding:6px 12px;font-size:13px}
+.saverow .btn{flex:0 0 auto;min-height:44px;padding:6px 10px;font-size:13px}
+.saverow{flex-wrap:wrap}
 .saverow span{font-size:12px;color:var(--sub);font-weight:700}
 .board{position:relative;border:3px solid var(--black);box-shadow:5px 5px 0 var(--black);background:var(--paper2);
   display:flex;justify-content:center;align-items:flex-start;min-height:200px;overflow:hidden}
@@ -133,7 +134,7 @@ td:first-child{text-align:left;font-weight:700}
       <div class="seg" id="sl-size"><button data-v="6">6×6</button><button data-v="8">8×8</button><button data-v="10">10×10</button></div>
     </div>
     <div class="status"><span>Time</span><b id="sl-time">0:00</b><span class="tag" id="sl-tag"></span><button class="qbtn" data-help="sl">？</button></div>
-    <div class="saverow"><button class="btn" id="sl-save"><small>SAVE</small>セーブ</button><button class="btn" id="sl-load"><small>BACK</small>セーブまで戻る</button><span id="sl-saveinfo">セーブなし</span></div>
+    <div class="saverow"><button class="btn" id="sl-save"><small>SAVE</small>セーブ</button><button class="btn" id="sl-load"><small>BACK</small>セーブまで戻る</button><button class="btn" id="sl-reset"><small>RESET</small>最初から</button><span id="sl-saveinfo">セーブなし</span></div>
     <div class="board" id="sl-board"><canvas id="s-canvas"></canvas>
       <div class="busy" id="sl-busy"><div class="spin"></div><div>問題を作っています…<br><small>答えが1つに決まるか確かめています</small></div></div>
     </div>
@@ -145,6 +146,7 @@ td:first-child{text-align:left;font-weight:700}
       <div class="seg tapsel" id="mn-tap"><span>タップで</span><button data-v="open">⛏ 掘る</button><button data-v="flag"><svg class="fi" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 3v14M4 17h8" stroke="#1a1a1a" stroke-width="2.2"/><path d="M8 3l9 4-9 4z" fill="#1d4ed8" stroke="#1a1a1a" stroke-width="1"/></svg> 旗を立てる</button></div>
     </div>
     <div class="status"><span>Time</span><b id="mn-time">0:00</b><span>Mines</span><b id="mn-left">0</b><span class="tag" id="mn-tag"></span><button class="qbtn" data-help="mn">？</button></div>
+    <div class="saverow"><button class="btn" id="mn-reset"><small>RESET</small>最初から</button></div>
     <div class="board" id="mn-board"><canvas id="m-canvas"></canvas>
       <div class="busy" id="mn-busy"><div class="spin"></div><div>盤面を作っています…<br><small>当てずっぽうなしで解けるか確かめています</small></div></div>
     </div>
@@ -156,7 +158,7 @@ td:first-child{text-align:left;font-weight:700}
       <div class="seg" id="my-size"><button data-v="6">6×6</button><button data-v="8">8×8</button><button data-v="10">10×10</button></div>
     </div>
     <div class="status"><span>Time</span><b id="my-time">0:00</b><span class="tag" id="my-tag"></span><button class="qbtn" data-help="my">？</button></div>
-    <div class="saverow"><button class="btn" id="my-save"><small>SAVE</small>セーブ</button><button class="btn" id="my-load"><small>BACK</small>セーブまで戻る</button><span id="my-saveinfo">セーブなし</span></div>
+    <div class="saverow"><button class="btn" id="my-save"><small>SAVE</small>セーブ</button><button class="btn" id="my-load"><small>BACK</small>セーブまで戻る</button><button class="btn" id="my-reset"><small>RESET</small>最初から</button><span id="my-saveinfo">セーブなし</span></div>
     <div class="board" id="my-board"><canvas id="y-canvas"></canvas>
       <div class="busy" id="my-busy"><div class="spin"></div><div>問題を作っています…<br><small>答えが1つに決まるか確かめています（10×10は少し時間がかかります）</small></div></div>
     </div>
@@ -169,7 +171,7 @@ td:first-child{text-align:left;font-weight:700}
       <div class="seg tapsel" id="nr-tap"><span>タップで</span><button data-v="black">■ 黒く塗る</button><button data-v="dot">・ 白の印</button></div>
     </div>
     <div class="status"><span>Time</span><b id="nr-time">0:00</b><span class="tag" id="nr-tag"></span><button class="qbtn" data-help="nr">？</button></div>
-    <div class="saverow"><button class="btn" id="nr-save"><small>SAVE</small>セーブ</button><button class="btn" id="nr-load"><small>BACK</small>セーブまで戻る</button><span id="nr-saveinfo">セーブなし</span></div>
+    <div class="saverow"><button class="btn" id="nr-save"><small>SAVE</small>セーブ</button><button class="btn" id="nr-load"><small>BACK</small>セーブまで戻る</button><button class="btn" id="nr-reset"><small>RESET</small>最初から</button><span id="nr-saveinfo">セーブなし</span></div>
     <div class="board" id="nr-board"><canvas id="r-canvas"></canvas>
       <div class="busy" id="nr-busy"><div class="spin"></div><div>問題を作っています…<br><small>答えが1つに決まるか確かめています（10×10は少し時間がかかります）</small></div></div>
     </div>
@@ -682,6 +684,20 @@ $('sl-hint').onclick = () => {
   save();
 };
 $('sl-new').onclick = slNew;
+// 最初からやり直す（同じ問題・印を全部消す。一手戻すで元に戻せる・時間とセーブはそのまま）
+function restartMarks(key, view, redraw) {
+  const g = S[key].game; if (!g) return;
+  if (g.done) { toast('クリア済みです。「新しい問題」で次へ'); return; }
+  if (!g.marks.some((m) => m !== 0)) { toast('まだ何も書いていません'); return; }
+  confirmBox('この問題を最初からやり直しますか？<br><small>一手戻すで元に戻せます。時間とセーブはそのまま。</small>', () => {
+    const ch = [];
+    for (let i = 0; i < g.marks.length; i++) if (g.marks[i] !== 0) { ch.push([i, g.marks[i], 0]); g.marks[i] = 0; }
+    g.undo.push(ch); if (g.undo.length > 500) g.undo.shift();
+    view.hint = null; view.wrong = null;
+    save(); redraw(); toast('最初に戻しました', 1500);
+  });
+}
+$('sl-reset').onclick = () => restartMarks('sl', sv, slDraw);
 
 /* =====================================================
    ましゅ（スリザーリンクの画面を写したもの。点＝マスの中心。g.W・g.H は点の並び−1）
@@ -1031,6 +1047,7 @@ $('my-hint').onclick = () => {
   save();
 };
 $('my-new').onclick = myNew;
+$('my-reset').onclick = () => restartMarks('my', yv, myDraw);
 
 /* =====================================================
    ぬりかべ
@@ -1263,6 +1280,7 @@ $('nr-hint').onclick = () => {
   save();
 };
 $('nr-new').onclick = nrNew;
+$('nr-reset').onclick = () => restartMarks('nr', rv, nrDraw);
 
 /* =====================================================
    マインスイーパー
@@ -1412,7 +1430,7 @@ async function mnTap(c, alt) {
     const r = await request({ type: 'mine', W: g.W, H: g.H, M: g.M, first: c });
     clearTimeout(slow); $('mn-busy').classList.remove('on'); mnBusy = false;
     if (S.mn.game !== g || !r.puzzle) return;
-    g.mines = r.puzzle.mines; mnNum = null;
+    g.mines = r.puzzle.mines; g.first = c; mnNum = null;
   }
   const n = nums(), ch = [];
   if (s === 1) {
@@ -1456,11 +1474,29 @@ function mnAfter() {
   }
   save(); mnDraw(); mnStatus();
 }
+// 最初からやり直す：全部閉じて、最初に開いた所だけ開け直す（一手戻すで元に戻せる）
+$('mn-reset').onclick = () => {
+  const g = S.mn.game; if (!g || !g.mines) { toast('まだ何も開いていません'); return; }
+  if (g.done) { toast('クリア済みです。「新しい盤面」で次へ'); return; }
+  confirmBox('この盤面を最初からやり直しますか？<br><small>最初に開いた所だけ開いた状態に戻ります。一手戻すで元に戻せます。時間はそのまま。</small>', () => {
+    const ch = [];
+    for (let c = 0; c < g.cells.length; c++) if (g.cells[c] !== 0) { ch.push([c, g.cells[c]]); g.cells[c] = 0; }
+    const lostPrev = g.lost;
+    if (g.lost >= 0) { g.lost = -1; g.assist = true; }
+    let first = g.first;
+    if (first == null) { const n = nums(); first = n.findIndex((v, i) => v === 0 && !g.mines[i]); }
+    if (first >= 0) mnOpen(first, ch);
+    g.undo.push({ ch, lostPrev: -1, resetLost: lostPrev }); if (g.undo.length > 500) g.undo.shift();
+    mv.hint = null; mv.wrongFlags = null;
+    save(); mnDraw(); mnStatus(); toast('最初に戻しました', 1500);
+  });
+};
 function mnUndo() {
   const g = S.mn.game; if (!g || g.done) return;
   const u = g.undo.pop(); if (!u) { toast('戻せる手がありません'); return; }
   for (let i = u.ch.length - 1; i >= 0; i--) g.cells[u.ch[i][0]] = u.ch[i][1];
   if (g.lost >= 0) { g.lost = -1; g.assist = true; }
+  if (u.resetLost != null && u.resetLost >= 0) g.lost = u.resetLost; // 「最初から」を取り消したら、地雷を踏んだ状態に戻す
   mv.hint = null; mv.wrongFlags = null;
   save(); mnDraw(); mnStatus();
 }

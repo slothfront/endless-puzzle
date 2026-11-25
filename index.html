@@ -143,6 +143,7 @@ td:first-child{text-align:left;font-weight:700}
   <section class="panel" id="p-mn">
     <div class="opts">
       <div class="seg" id="mn-level"><button data-v="1">初級 9×9</button><button data-v="2">中級 16×16</button><button data-v="3">上級 16×30</button></div>
+      <div class="seg tapsel" id="mn-dens"><span>地雷</span><button data-v="1">ふつう</button><button data-v="2">少なめ</button><button data-v="3">とても少なめ</button></div>
       <div class="seg tapsel" id="mn-tap"><span>タップで</span><button data-v="open">⛏ 掘る</button><button data-v="flag"><svg class="fi" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 3v14M4 17h8" stroke="#1a1a1a" stroke-width="2.2"/><path d="M8 3l9 4-9 4z" fill="#1d4ed8" stroke="#1a1a1a" stroke-width="1"/></svg> 旗を立てる</button></div>
     </div>
     <div class="status"><span>Time</span><b id="mn-time">0:00</b><span>Mines</span><b id="mn-left">0</b><span class="tag" id="mn-tag"></span><button class="qbtn" data-help="mn">？</button></div>
@@ -205,6 +206,7 @@ td:first-child{text-align:left;font-weight:700}
       </ul>
       <p><b>マインスイーパー</b>：地雷のないマスを全部開けばクリア。数字は周りの8マスにある地雷の数。</p>
       <ul>
+        <li>大きさとは別に、地雷の数を「ふつう／少なめ／とても少なめ」から選べます</li>
         <li>最初の1手は必ず安全（「旗を立てる」を選んでいても、最初のタップは掘ります）。<b>どの盤面も当てずっぽうなしで最後まで解けます</b></li>
         <li>「タップで」を<b>掘る</b>にするとタップ＝掘る・長押し＝旗、<b>旗を立てる</b>にするとタップ＝旗・長押し＝掘る（下の左のボタンでも切り替えられます）</li>
         <li>数字をタップ＝周りの旗の数が合っていれば残りをまとめて開く</li>
@@ -251,9 +253,12 @@ const KEY = 'endless-puzzle-v1';
 const $ = (id) => document.getElementById(id);
 const LV = { 1: 'かんたん', 2: 'ふつう', 3: 'むずかしい' };
 const MLV = { 1: { W: 9, H: 9, M: 10, name: '初級' }, 2: { W: 16, H: 16, M: 40, name: '中級' }, 3: { W: 16, H: 30, M: 99, name: '上級' } };
+// 地雷の数（大きさはそのまま）：ふつう／少なめ／とても少なめ
+const MDENS = { 1: [10, 8, 6], 2: [40, 30, 20], 3: [99, 70, 50] }, DNAME = { 1: 'ふつう', 2: '少なめ', 3: 'とても少なめ' };
+const mKey = (level, dens) => 'M' + level + (dens > 1 ? '-d' + dens : '');
 
 /* ---------- 保存 ---------- */
-function defaults() { return { v: 1, tab: 'sl', sl: { level: 2, size: 8, game: null, mode: 1 }, mn: { level: 1, game: null, mode: 'open' }, my: { level: 2, size: 8, game: null, mode: 1 }, nr: { level: 2, size: 8, game: null, mode: 'black' }, queue: {}, stats: {}, seen: {} }; }
+function defaults() { return { v: 1, tab: 'sl', sl: { level: 2, size: 8, game: null, mode: 1 }, mn: { level: 1, dens: 1, game: null, mode: 'open' }, my: { level: 2, size: 8, game: null, mode: 1 }, nr: { level: 2, size: 8, game: null, mode: 'black' }, queue: {}, stats: {}, seen: {} }; }
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || defaults(); } catch (e) { S = defaults(); }
 S = Object.assign(defaults(), S);
@@ -1294,8 +1299,8 @@ const FLAG_SVG = "<svg class=\"fi\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><
 const NUMCOL = [null, '#1d4ed8', '#0f766e', '#6d28d9', '#1e3a8a', '#92400e', '#0e7490', '#1a1a1a', '#6b6b6b'];
 
 function mnNewGame() {
-  const L = MLV[S.mn.level];
-  S.mn.game = { W: L.W, H: L.H, M: L.M, level: S.mn.level, mines: null, cells: new Array(L.W * L.H).fill(0), undo: [], t: 0, started: false, assist: false, done: false, lost: -1 };
+  const L = MLV[S.mn.level], dens = S.mn.dens || 1;
+  S.mn.game = { W: L.W, H: L.H, M: MDENS[S.mn.level][dens - 1], dens, level: S.mn.level, mines: null, cells: new Array(L.W * L.H).fill(0), undo: [], t: 0, started: false, assist: false, done: false, lost: -1 };
   mv.hint = null; mv.wrongFlags = null; mnNum = null;
   save(); mnLayout();
 }
@@ -1309,8 +1314,16 @@ function mnSetting(v) {
   if (g && g.started && !g.done && g.lost < 0) confirmBox('今の盤面をやめて、' + MLV[v].name + 'で始めますか？', apply); else apply();
 }
 document.querySelectorAll('#mn-level button').forEach((b) => b.onclick = () => mnSetting(+b.dataset.v));
+function mnDensSetting(v) {
+  if ((S.mn.dens || 1) === v) return;
+  const g = S.mn.game;
+  const apply = () => { S.mn.dens = v; mnSync(); mnNewGame(); };
+  if (g && g.started && !g.done && g.lost < 0) confirmBox('今の盤面をやめて、地雷' + DNAME[v] + '（' + MDENS[S.mn.level][v - 1] + '個）で始めますか？', apply); else apply();
+}
+document.querySelectorAll('#mn-dens button').forEach((b) => b.onclick = () => mnDensSetting(+b.dataset.v));
 function mnSync() {
   document.querySelectorAll('#mn-level button').forEach((b) => b.classList.toggle('on', +b.dataset.v === S.mn.level));
+  document.querySelectorAll('#mn-dens button').forEach((b) => { const d = +b.dataset.v; b.classList.toggle('on', d === (S.mn.dens || 1)); b.textContent = DNAME[d] + ' ' + MDENS[S.mn.level][d - 1]; });
   const flag = S.mn.mode === 'flag';
   $('mn-mode').innerHTML = '<small>TAP</small>' + (flag ? FLAG_SVG + ' 旗' : '⛏ 掘る');
   document.querySelectorAll('#mn-tap button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.mn.mode));
@@ -1334,7 +1347,7 @@ function mnStatus() {
   let f = 0; for (const c of g.cells) if (c === 2) f++;
   $('mn-left').textContent = g.M - f;
   const tag = $('mn-tag');
-  tag.textContent = MLV[g.level].name + (g.assist ? '・補助あり' : '');
+  tag.textContent = MLV[g.level].name + (g.dens > 1 ? '・地雷' + g.M : '') + (g.assist ? '・補助あり' : '');
   tag.classList.toggle('assist', g.assist);
 }
 function drawFlag(ctx, x, y, cs) {
@@ -1403,7 +1416,7 @@ function mnRecord(ch, lostPrev) {
   if (!ch.length) return;
   g.undo.push({ ch, lostPrev }); if (g.undo.length > 500) g.undo.shift();
   mv.hint = null; mv.wrongFlags = null;
-  if (!g.started) { g.started = true; stat('M' + g.level).played++; }
+  if (!g.started) { g.started = true; stat(mKey(g.level, g.dens || 1)).played++; }
 }
 function mnOpen(c, ch) {
   const g = S.mn.game, n = nums(), W = g.W, H = g.H, nb = EPGen.nbTable(W, H);
@@ -1449,7 +1462,7 @@ async function mnTap(c, alt) {
 function mnAfter() {
   const g = S.mn.game;
   if (g.lost >= 0) {
-    stat('M' + g.level);
+    stat(mKey(g.level, g.dens || 1));
     save(true); mnDraw(); mnStatus();
     if (navigator.vibrate) navigator.vibrate(120);
     setTimeout(() => modal(`<h3 class="lose">Boom</h3>
@@ -1463,14 +1476,14 @@ function mnAfter() {
   if (open === g.W * g.H - g.M) {
     for (let c = 0; c < g.cells.length; c++) if (g.mines[c]) g.cells[c] = 2;
     g.done = true;
-    const st = stat('M' + g.level);
+    const st = stat(mKey(g.level, g.dens || 1));
     st.cleared++; st.sum += g.t; let nb = false;
     if (g.assist) st.assisted++; else if (st.best == null || g.t < st.best) { st.best = g.t; nb = true; }
     save(true); mnDraw(); mnStatus();
     if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
     setTimeout(() => modal(`<h3 class="win">Clear!</h3>
       <p class="big">${fmt(g.t)}${nb ? '<span class="nb">NEW BEST</span>' : ''}</p>
-      <p>${MLV[g.level].name}・クリア ${st.cleared}回・ベスト ${fmt(st.best)}${g.assist ? '<br>（補助を使ったのでベストには入りません）' : ''}</p>
+      <p>${MLV[g.level].name}${g.dens > 1 ? '・地雷' + g.M : ''}・クリア ${st.cleared}回・ベスト ${fmt(st.best)}${g.assist ? '<br>（補助を使ったのでベストには入りません）' : ''}</p>
       <div class="row"><button class="btn" id="md-see">盤面を見る</button><button class="btn blue" id="md-next">次の盤面</button></div>`,
       { 'md-next': mnNewGame, 'md-see': null }), 350);
     return;
@@ -1559,7 +1572,7 @@ function renderStats() {
   let h = head;
   for (const lv of [1, 2, 3]) for (const sz of [6, 8, 10]) h += row(LV[lv] + ' ' + sz + '×' + sz, slKey(sz, lv));
   $('st-sl').innerHTML = h;
-  h = head; for (const lv of [1, 2, 3]) h += row(MLV[lv].name, 'M' + lv);
+  h = head; for (const lv of [1, 2, 3]) for (const d of [1, 2, 3]) h += row(MLV[lv].name + (d > 1 ? ' 地雷' + MDENS[lv][d - 1] : ''), mKey(lv, d));
   $('st-mn').innerHTML = h;
   h = head; for (const lv of [1, 2, 3]) for (const sz of [6, 8, 10]) h += row(LV[lv] + ' ' + sz + '×' + sz, myKey(sz, lv));
   $('st-my').innerHTML = h;
@@ -1594,7 +1607,8 @@ const HELP = {
     <li>数字より線や×が多いマス、3本以上集まった点は黄色</li></ul>`,
   mn: `<h4>マインスイーパー</h4><ul>
     <li>地雷のないマスを全部開けばクリア。数字は<b>周りの8マスにある地雷の数</b></li>
-    <li>最初の1手は必ず安全。<b>どの盤面も当てずっぽうなしで最後まで解けます</b></li>
+    <li>大きさとは別に、地雷の数を「ふつう／少なめ／とても少なめ」から選べます</li>
+        <li>最初の1手は必ず安全。<b>どの盤面も当てずっぽうなしで最後まで解けます</b></li>
     <li>「タップで」掘る／旗を立てるを選べます（長押しは反対の操作）</li>
     <li>数字をタップ＝周りの旗の数が合っていれば残りをまとめて開く</li></ul>`,
   my: `<h4>ましゅ</h4><ul>
